@@ -1,0 +1,57 @@
+{
+    "transform": {
+        "file": "transform.py",
+        "function": "augment",
+        "parameters": {
+            "transformation": {
+                "type": "(m, i)matrix",
+                "required": true
+            }
+        }
+    },
+    "dist": {
+        "file": "dist.py",
+        "function": "augment",
+        "parameters": {
+            "dist_data": {
+                "type": "(i, m)matrix",
+                "required": true
+            }
+        }
+    },
+    "subset": {
+        "file": "subset.py",
+        "function": "augment",
+        "parameters": {
+            "subset": {
+                "type": "(i,)matrix",
+                "required": true
+            }
+        }
+    },
+    "tsne": {
+        "file": "tsne.py",
+        "function": "augment",
+        "parameters": {
+            "kwargs": {
+                "type": "kwargs",
+                "required": false
+            }
+        }
+    },
+    "umap": {
+        "file": "umap.py",
+        "function": "augment",
+        "parameters": {
+            "kwargs": {
+                "type": "kwargs",
+                "required": false
+            }
+        }
+    },
+    "identity": {
+        "file": "identity.py",
+        "function": "augment",
+        "parameters": {}
+    }
+}

@@ -1,0 +1,70 @@
+{
+    "dotdist": {
+        "file": "dotdist.py",
+        "function": "index",
+        "parameters": {
+            "v": {
+                "type": "(m,)matrix",
+                "required": true
+            }
+        }
+    },
+    "index_from_augmentation": {
+        "file": "index_from_augmentation.py",
+        "function": "index",
+        "parameters": {
+            "row": {
+                "type": "int",
+                "required": false
+            },
+            "col": {
+                "type": "int",
+                "required": false
+            }
+        }
+    },
+    "hdbscan": {
+        "file": "hdbscan.py",
+        "function": "index",
+        "parameters": {
+            "min_cluster_size": {
+                "type": "int",
+                "required": false                
+            },
+            "min_samples": {
+                "type": "int",
+                "required": false                
+            },
+            "metric": {
+                "type": [ "string", "index" ],
+                "required": false                
+            },
+            "alpha": {
+                "type": "float",
+                "required": false                
+            },
+            "kwargs": {
+                "type": "kwargs",
+                "required": false
+            }
+        }
+    },
+    "range_index": {
+        "file": "range_index.py",
+        "function": "index",
+        "parameters": {
+            "start": {
+                "type": "int",
+                "required": true
+            },
+            "end": {
+                "type": "int",
+                "required": true
+            },
+            "name": {
+                "type": "string",
+                "required": true
+            }
+        }
+    }
+}

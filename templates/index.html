@@ -1,0 +1,3023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Viewer</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e1e5e9;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e1e5e9;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-indicator {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .plot-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #plot {
+            width: 100%;
+            height: 100%;
+        }
+
+        .control-section {
+            padding: 16px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+
+        .control-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .no-data-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .no-data-icon {
+            font-size: 48px;
+            color: #6c757d;
+            margin-bottom: 16px;
+        }
+
+        .no-data-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .no-data-description {
+            color: #6c757d;
+            margin-bottom: 24px;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        .suggestion-card {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #1976d2;
+        }
+
+        .suggestion-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 4px;
+        }
+
+        .suggestion-text {
+            font-size: 12px;
+            color: #424242;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-size: 16px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            border: 1px solid #c3e6cb;
+        }
+
+        #plot {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .data-tree {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+
+        .tree-loading {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .tree-node {
+            margin: 2px 0;
+            padding: 2px 0;
+            position: relative;
+        }
+
+        .tree-toggle {
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #666;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+            z-index: 1;
+        }
+
+        .tree-toggle:hover {
+            background-color: #e9ecef;
+        }
+
+        .tree-toggle.expanded {
+            transform: translateY(-50%) rotate(0deg);
+        }
+
+        .tree-node-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+            margin-left: 32px; /* Space for toggle button */
+        }
+
+        .tree-node-header:hover {
+            background-color: #f0f0f0;
+        }
+
+        .tree-node-header.expanded {
+            background-color: #e3f2fd;
+        }
+
+        .tree-icon {
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .tree-label {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .tree-node-content {
+            margin-left: 36px;
+            border-left: 1px solid #e0e0e0;
+            padding-left: 8px;
+        }
+
+        .tree-node-content.collapsed {
+            display: none !important;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 1px 4px;
+            margin: 1px 0;
+            border-radius: 2px;
+            font-size: 11px;
+        }
+
+        .tree-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .tree-item.current {
+            background-color: #e3f2fd;
+            border-left: 2px solid #1976d2;
+        }
+
+        .tree-item-icon {
+            width: 12px;
+            height: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .tree-item-label {
+            flex: 1;
+            color: #333;
+        }
+
+        .tree-item-count {
+            color: #666;
+            font-size: 10px;
+            background: #f0f0f0;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+
+        .tree-empty {
+            color: #999;
+            font-style: italic;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .data-info-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 11px;
+        }
+
+        .data-info-loading {
+            color: #999;
+            font-style: italic;
+        }
+
+        .data-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .data-info-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .data-info-value {
+            color: #333;
+        }
+
+        .parameters-container {
+            margin-top: 8px;
+        }
+
+        .parameter-group {
+            margin-bottom: 8px;
+        }
+
+        .parameter-group label {
+            display: block;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .parameter-group input,
+        .parameter-group select,
+        .parameter-group textarea {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .parameter-group textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .parameter-required {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        /* Point Information Panel */
+        .point-info-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .point-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .point-info-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .point-info-content {
+            padding: 16px;
+        }
+
+        .point-info-item {
+            margin-bottom: 12px;
+        }
+
+        .point-info-label {
+            font-weight: 500;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .point-info-value {
+            color: #333;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .point-actions {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+
+        .point-action-btn {
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .point-action-btn:hover {
+            background: #0056b3;
+        }
+
+        .point-action-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+
+
+        .tree-node-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .tree-node-header:hover {
+            background-color: #f0f0f0;
+        }
+
+        .tree-item {
+            cursor: pointer;
+        }
+
+        .tree-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tree-item.valid-color {
+            cursor: pointer;
+        }
+
+        .tree-item.valid-color:hover {
+            background-color: #e8f5e8;
+            border-left: 2px solid #4caf50;
+        }
+
+        .tree-item.invalid-color {
+            opacity: 0.6;
+        }
+
+        .tree-item-badge {
+            font-size: 10px;
+            margin-left: 4px;
+        }
+
+        .tree-item.valid-color .tree-item-badge {
+            color: #4caf50;
+        }
+        
+        /* Color Scale Editor Styles */
+        .color-scale-editor {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            max-width: 90vw;
+            height: 280px;
+            max-height: 90vh;
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .color-scale-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #007bff;
+            color: white;
+            border-radius: 6px 6px 0 0;
+        }
+        
+        .color-scale-header h3 {
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .color-scale-content {
+            flex: 1;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .color-scale-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+        
+        .color-scale-controls {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .color-scale-plot {
+            flex: 1;
+            min-height: 180px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .color-scale-help {
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+        }
+        
+        .color-scale-help p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="control-section">
+                <div class="section-title">Data Tree</div>
+                <div id="data-tree" class="data-tree">
+                    <div class="tree-loading">Loading tree structure...</div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">📊 Current Data Manager</div>
+                <div id="current-data-info" class="data-info-box">
+                    <div class="data-info-loading">Loading...</div>
+                </div>
+            </div>
+            <div class="control-section">
+                <div class="section-title">🔄 Augmentation</div>
+                <div class="form-group">
+                    <label for="augmentation-data-source">Data Source</label>
+                    <select id="augmentation-data-source">
+                        <option value="primary">primary</option>
+                    </select>
+                    <div id="augmentation-data-source-info" class="data-source-info" style="display: none; font-size: 0.8em; color: #666; margin-top: 2px;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="augmentation-method">Method</label>
+                    <select id="augmentation-method" onchange="updateAugmentationParameters()">
+                        <option value="">Select a method...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="augmentation-type">Type</label>
+                    <input type="text" id="augmentation-type" placeholder="tsne_2d">
+                </div>
+                <div id="augmentation-parameters" class="parameters-container">
+                    <!-- Dynamic parameters will be generated here -->
+                </div>
+                <button class="btn btn-success" onclick="createAugmentation()">Create</button>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">🔍 Index</div>
+                <div class="form-group">
+                    <label for="index-data-source">Data Source</label>
+                    <select id="index-data-source">
+                        <option value="primary">primary</option>
+                    </select>
+                    <div id="index-data-source-info" class="data-source-info" style="display: none; font-size: 0.8em; color: #666; margin-top: 2px;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="index-method">Method</label>
+                    <select id="index-method" onchange="updateIndexParameters()">
+                        <option value="">Select a method...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="index-type">Type</label>
+                    <input type="text" id="index-type" placeholder="clusters">
+                </div>
+                <div id="index-parameters" class="parameters-container">
+                    <!-- Dynamic parameters will be generated here -->
+                </div>
+                <button class="btn btn-warning" onclick="createIndex()">Create</button>
+            </div>
+
+            <div class="control-section">
+                <div class="section-title">📊 Stats</div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Points</div>
+                        <div class="stat-value" id="point-count">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Size</div>
+                        <div class="stat-value" id="data-size">0 B</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Load Time</div>
+                        <div class="stat-value" id="load-time">0 ms</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Indexes</div>
+                        <div class="stat-value" id="index-count">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>Data Viewer</h1>
+                <div class="status-indicator" id="status">Loading...</div>
+            </div>
+            <div class="plot-container">
+                <div id="plot"></div>
+            </div>
+        </div>
+        
+        <!-- Point Information Panel -->
+        <div id="point-info-panel" class="point-info-panel" style="display: none;">
+            <div class="point-info-header">
+                <h3>Selected Point</h3>
+                <button class="close-btn" onclick="closePointInfo()">×</button>
+            </div>
+            <div id="point-info-content" class="point-info-content">
+                <!-- Point information will be populated here -->
+            </div>
+        </div>
+        
+        <!-- Color Scale Editor Panel -->
+        <div id="color-scale-editor" class="color-scale-editor" style="display: none;">
+            <div class="color-scale-header">
+                <h3>Color Scale Editor</h3>
+                <button class="close-btn" onclick="closeColorScaleEditor()">×</button>
+            </div>
+            <div class="color-scale-content">
+                <div class="color-scale-info">
+                    <div id="color-scale-title">Color Scale: <span id="current-color-source">None</span></div>
+                                    <div class="color-scale-controls">
+                    <button class="btn btn-sm btn-primary" onclick="resetColorScale()" style="font-size: 10px; padding: 4px 8px;">Reset</button>
+                </div>
+                </div>
+                <div id="color-scale-plot" class="color-scale-plot"></div>
+                <div class="color-scale-help">
+                    <p>Drag the control points to adjust the color mapping. The curve shows how index values map to colors.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <div id="loading-message">Processing...</div>
+    </div>
+
+    <script>
+        let plotData = null;
+        let colorData = null;
+        let startTime = Date.now();
+        let currentStatus = null;
+        
+        // Point selection state
+        let selectedPoint = null;
+        let selectedPointIndex = null;
+        let selectedPointDataManager = null;
+        let clickStartPos = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadStatus();
+            await loadAndRenderPlot();
+            await buildDataTree();
+        });
+
+        // Load current status
+        async function loadStatus() {
+            try {
+                const response = await fetch('/api/status');
+                currentStatus = await response.json();
+                
+                // Update data source dropdowns for augmentations and indexes
+                updateDataSourceDropdowns();
+                
+                // Update data manager select (if it exists)
+                const dataManagerSelect = document.getElementById('data-manager-select');
+                if (dataManagerSelect) {
+                    dataManagerSelect.innerHTML = '';
+                    currentStatus.available_augmentations.forEach(dm => {
+                        const option = document.createElement('option');
+                        option.value = dm;
+                        option.textContent = dm;
+                        if (dm === currentStatus.current_data_manager) {
+                            option.selected = true;
+                        }
+                        dataManagerSelect.appendChild(option);
+                    });
+                }
+
+
+
+                // Update augmentation method select
+                const augmentationMethodSelect = document.getElementById('augmentation-method');
+                if (augmentationMethodSelect) {
+                    augmentationMethodSelect.innerHTML = '<option value="">Select a method...</option>';
+                    if (currentStatus.augmentation_methods) {
+                        Object.keys(currentStatus.augmentation_methods).forEach(method => {
+                            const option = document.createElement('option');
+                            option.value = method;
+                            option.textContent = method;
+                            augmentationMethodSelect.appendChild(option);
+                        });
+                    }
+                }
+
+                // Update index method select
+                const indexMethodSelect = document.getElementById('index-method');
+                if (indexMethodSelect) {
+                    indexMethodSelect.innerHTML = '<option value="">Select a method...</option>';
+                    if (currentStatus.index_methods) {
+                        Object.keys(currentStatus.index_methods).forEach(method => {
+                            const option = document.createElement('option');
+                            option.value = method;
+                            option.textContent = method;
+                            indexMethodSelect.appendChild(option);
+                        });
+                    }
+                }
+
+                // Update statistics
+                document.getElementById('index-count').textContent = 
+                    currentStatus.available_indexes ? currentStatus.available_indexes.length : 0;
+                //});
+            } catch (error) {
+                console.error('Failed to load status:', error);
+                document.getElementById('status').textContent = '❌ Error';
+                document.getElementById('status').className = 'status-indicator error';
+            }
+        }
+
+        // Load and render the plot
+        async function loadAndRenderPlot() {
+            const statusEl = document.getElementById('status');
+            const plotEl = document.getElementById('plot');
+            startTime = Date.now();
+            
+            // Clear any existing point selection state when loading new data
+            if (window.originalColors) {
+                delete window.originalColors;
+                delete window.originalOpacity;
+            }
+            
+            try {
+                statusEl.textContent = 'Loading...';
+                
+                // Check if current data manager has 2D data
+                if (!currentStatus || !currentStatus.data_info || !currentStatus.data_info.is_2d) {
+                    showNoDataMessage();
+                    return;
+                }
+
+                // Get data from current data manager
+                const currentDataManager = currentStatus.current_data_manager;
+                if (!currentDataManager) {
+                    showNoDataMessage();
+                    return;
+                }
+
+                // Try to load data from the current data manager
+                const res = await fetch(`/api/data.bin`);
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        showNoDataMessage();
+                        return;
+                    }
+                    throw new Error('Failed to load data');
+                }
+                
+                const buf = await res.arrayBuffer();
+                const floats = new Float32Array(buf);
+                
+                if (floats.length % 2 !== 0) throw new Error('Unexpected data format');
+                
+                const count = floats.length / 2;
+                const x = new Array(count);
+                const y = new Array(count);
+                
+                for (let i = 0, j = 0; i < count; i++, j += 2) {
+                    x[i] = floats[j];
+                    y[i] = floats[j + 1];
+                }
+
+                plotData = { x, y, count };
+                
+                // Load color data
+                colorData = await loadColorData();
+                
+                // Set up default color system when no color data is available
+                const hasColorData = colorData && colorData.length > 0;
+                const markerColor = hasColorData ? colorData : Array( plotData.x.length ).fill('#1f77b4'); // Default blue color
+                const showColorScale = hasColorData;
+                
+                const trace = {
+                    x: x,
+                    y: y,
+                    mode: 'markers',
+                    type: 'scattergl',
+                    marker: {
+                        size: 4,
+                        color: markerColor,
+                        colorscale: hasColorData ? 'Viridis' : undefined,
+                        showscale: showColorScale,
+                        opacity: 0.7,
+                        line: {
+                            color: 'rgba(255,255,255,0.2)',
+                            width: 0.5
+                        }
+                    },
+                    hovertemplate: '<b>Point %{pointNumber}</b><br>' +
+                                 'X: %{x:.4f}<br>' +
+                                 'Y: %{y:.4f}<br>' +
+                                 (hasColorData ? 'Value: %{marker.color}<br>' : '') +
+                                 '<extra></extra>'
+                };
+
+                const layout = {
+                    title: {
+                        text: currentDataManager,
+                        font: { size: 16, color: '#333' }
+                    },
+                    xaxis: {
+                        title: { text: 'X', font: { size: 12 } },
+                        gridcolor: '#f0f0f0',
+                        zeroline: false,
+                        showgrid: true,
+                        fixedrange: false
+                    },
+                    yaxis: {
+                        title: { text: 'Y', font: { size: 12 } },
+                        gridcolor: '#f0f0f0',
+                        zeroline: false,
+                        showgrid: true,
+                        fixedrange: false
+                    },
+                    hovermode: 'closest',
+                    margin: { l: 50, r: 20, t: 50, b: 50 },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white',
+                    showlegend: false,
+                    dragmode: 'pan',
+                    selectdirection: false,
+                    coloraxis: showColorScale ? {
+                        colorbar: {
+                            title: 'Value',
+                            thickness: 12,
+                            len: 0.4
+                        }
+                    } : undefined
+                };
+
+                const config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d', 'resetScale2d'],
+                    displaylogo: false,
+                    scrollZoom: true,
+                    editable: false
+                };
+
+                await Plotly.newPlot('plot', [trace], layout, config);
+                
+                // Store original colors for point selection highlighting
+                const plotDiv = document.getElementById('plot');
+                if (plotDiv && plotDiv.data && plotDiv.data[0]) {
+                    const trace = plotDiv.data[0];
+                    if (trace.marker && trace.marker.color) {
+                        window.originalColors = Array.isArray(trace.marker.color) ? [...trace.marker.color] : [trace.marker.color];
+                    } else {
+                        // Store default color if no color data
+                        window.originalColors = new Array(trace.x.length).fill('#1f77b4');
+                    }
+                    window.originalOpacity = trace.marker.opacity || 0.7;
+                }
+                
+                // Add point selection event handlers
+                
+                // Handle mouse down for point selection
+                plotDiv.on('plotly_click', function(data) {
+                    const point = data.points[0];
+                    if (point) {
+                        // Safely get the color value, handling cases where marker or color might be undefined
+                        const color = point.marker && point.marker.color !== undefined ? point.marker.color : null;
+                        selectPoint(point.pointIndex, point.x, point.y, color);
+                    }
+                });
+                
+                // Handle mouse events for click vs drag detection
+                plotDiv.on('mousedown', function(e) {
+                    clickStartPos = { x: e.clientX, y: e.clientY };
+                });
+                
+                plotDiv.on('mousemove', function(e) {
+                    if (clickStartPos) {
+                        const deltaX = Math.abs(e.clientX - clickStartPos.x);
+                        const deltaY = Math.abs(e.clientY - clickStartPos.y);
+                        const threshold = 5; // pixels
+                        
+                        if (deltaX > threshold || deltaY > threshold) {
+                            // Mouse moved significantly, this is a drag, not a click
+                            clickStartPos = null;
+                        }
+                    }
+                });
+                
+                plotDiv.on('mouseup', function(e) {
+                    if (clickStartPos) {
+                        // Mouse didn't move much, this was a click
+                        // Point selection is handled by plotly_click
+                        clickStartPos = null;
+                    }
+                });
+                
+                // Add custom wheel event handler for zooming
+                
+                plotDiv.on('wheel', function(e) {
+                    e.preventDefault();
+                    
+                    const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+                    
+                    // Get current viewport from the plot
+                    const currentLayout = plotDiv.layout;
+                    const xRange = currentLayout.xaxis.range;
+                    const yRange = currentLayout.yaxis.range;
+                    const xCenter = (xRange[0] + xRange[1]) / 2;
+                    const yCenter = (yRange[0] + yRange[1]) / 2;
+                    const xSpan = (xRange[1] - xRange[0]) / 2;
+                    const ySpan = (yRange[1] - yRange[0]) / 2;
+                    
+                    const update = {
+                        'xaxis.range[0]': xCenter - xSpan * zoomFactor,
+                        'xaxis.range[1]': xCenter + xSpan * zoomFactor,
+                        'yaxis.range[0]': yCenter - ySpan * zoomFactor,
+                        'yaxis.range[1]': yCenter + ySpan * zoomFactor
+                    };
+                    
+                    Plotly.relayout(plotDiv, update);
+                });
+                
+                // Add click handler for color scale editor
+                plotDiv.on('plotly_click', function(data) {
+                    // Check if click is on the colorbar
+                    if (data.event && data.event.target && data.event.target.className && 
+                        data.event.target.className.includes('colorbar')) {
+                        openColorScaleEditor();
+                    }
+                });
+                
+                const loadTime = Date.now() - startTime;
+                updateInfoPanel(count, buf.byteLength, loadTime);
+                
+                statusEl.textContent = `${count.toLocaleString()} points`;
+                
+            } catch (error) {
+                console.error('Plot loading error:', error);
+                showNoDataMessage();
+            }
+        }
+
+        // Show helpful message when no 2D data is available
+        function showNoDataMessage() {
+            const plotEl = document.getElementById('plot');
+            const statusEl = document.getElementById('status');
+            
+            statusEl.textContent = 'No 2D data';
+            
+            // Get detailed dataset information
+            let dataInfo = {};
+            let availableAugmentations = [];
+            
+            if (currentStatus && currentStatus.data_info) {
+                dataInfo = currentStatus.data_info;
+                availableAugmentations = currentStatus.available_augmentations || [];
+            }
+            
+            plotEl.innerHTML = `
+                <div class="no-data-container">
+                    <div class="no-data-icon">📊</div>
+                    <div class="no-data-title">No 2D Data Available</div>
+                    <div class="no-data-description">
+                        The current data manager doesn't have 2-dimensional data for visualization.
+                    </div>
+                    
+                    ${availableAugmentations.length > 1 ? `
+                        <div class="suggestion-card">
+                            <div class="suggestion-title">Switch to 2D Data Manager</div>
+                            <div class="suggestion-text">
+                                You have ${availableAugmentations.length} data managers available. Switch to one with 2D data.
+                            </div>
+                            <select id="switch-data-manager-select" class="form-control" onchange="switchToSelectedDataManager()">
+                                <option value="">Select a data manager...</option>
+                                ${availableAugmentations.filter(dm => dm !== 'primary').map(dm => 
+                                    `<option value="${dm}">${dm}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="suggestion-card">
+                        <div class="suggestion-title">Create a 2D Visualization</div>
+                        <div class="suggestion-text">
+                            Create a 2D augmentation using t-SNE or UMAP to reduce your high-dimensional data to 2D.
+                        </div>
+                        <button class="btn btn-success" onclick="createTSNEAugmentation()">
+                            Create t-SNE
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Update info panel with available data
+            updateInfoPanel(0, 0, 0);
+        }
+
+        // Load color data for visualization
+        async function loadColorData() {
+            try {
+                if (!currentStatus || !currentStatus.current_color_source) {
+                    return null;
+                }
+                
+                const response = await fetch('/api/color-data');
+                if (!response.ok) {
+                    console.warn('Failed to load color data:', response.status);
+                    return null;
+                }
+                
+                const result = await response.json();
+                return result.color_data || null;
+            } catch (error) {
+                console.warn('Error loading color data:', error);
+                return null;
+            }
+        }
+
+        function updateInfoPanel(count, dataSize, loadTime) {
+            document.getElementById('point-count').textContent = count.toLocaleString();
+            document.getElementById('data-size').textContent = formatBytes(dataSize);
+            document.getElementById('load-time').textContent = loadTime;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Point selection functions
+        function selectPoint(index, x, y, color) {
+            selectedPointIndex = index;
+            selectedPoint = { x, y, color };
+            selectedPointDataManager = currentStatus.current_data_manager;
+            
+            showPointInfo(index, x, y, color);
+            highlightSelectedPoint(index);
+            
+            // Update parameter dropdowns to include the selected point
+            updateParameterDropdowns();
+        }
+
+        function showPointInfo(index, x, y, color) {
+            const panel = document.getElementById('point-info-panel');
+            const content = document.getElementById('point-info-content');
+            
+            let html = `
+                <div class="point-info-item">
+                    <div class="point-info-label">Index</div>
+                    <div class="point-info-value">${index}</div>
+                </div>
+                <div class="point-info-item">
+                    <div class="point-info-label">Coordinates</div>
+                    <div class="point-info-value">(${x.toFixed(4)}, ${y.toFixed(4)})</div>
+                </div>
+            `;
+            
+            if (color !== undefined && color !== null) {
+                html += `
+                    <div class="point-info-item">
+                        <div class="point-info-label">Color Value</div>
+                        <div class="point-info-value">${color}</div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="point-info-item">
+                    <div class="point-info-label">Data Manager</div>
+                    <div class="point-info-value">${selectedPointDataManager}</div>
+                </div>
+                <div class="point-actions">
+                    <button class="point-action-btn" onclick="copyPointIndex()">
+                        Copy Index
+                    </button>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+            panel.style.display = 'block';
+        }
+
+        function closePointInfo() {
+            document.getElementById('point-info-panel').style.display = 'none';
+            clearPointHighlight();
+            
+            // Clear selected point state
+            selectedPoint = null;
+            selectedPointIndex = null;
+            selectedPointDataManager = null;
+            
+            // Update parameter dropdowns to remove point options
+            updateParameterDropdowns();
+        }
+
+        function highlightSelectedPoint(index) {
+            // Update the plot to highlight the selected point
+            const plotDiv = document.getElementById('plot');
+            if (plotDiv && plotDiv.data && plotDiv.data[0]) {
+                const trace = plotDiv.data[0];
+                
+                // Store original colors and opacity for restoration
+                if (!window.originalColors) {
+                    // Handle case where there might not be color data
+                    if (trace.marker && trace.marker.color) {
+                        window.originalColors = [...trace.marker.color];
+                    } else {
+                        // Use default color if no color data exists
+                        window.originalColors = new Array(trace.x.length).fill('#1f77b4');
+                    }
+                    window.originalOpacity = trace.marker.opacity || 0.7;
+                }
+                
+                // Create new colors and opacity arrays
+                const newColors = [...window.originalColors];
+                const newOpacity = new Array(trace.x.length).fill(0.05); // Make all points transparent
+                newOpacity[index] = 1.0; // Keep selected point fully opaque
+                
+                Plotly.restyle(plotDiv, {
+                    'marker.color': [newColors],
+                    'marker.opacity': [newOpacity]
+                });
+            }
+        }
+
+        function clearPointHighlight() {
+            // Restore original colors and opacity
+            const plotDiv = document.getElementById('plot');
+            if (plotDiv && plotDiv.data && plotDiv.data[0]) {
+                const trace = plotDiv.data[0];
+                
+                if (window.originalColors) {
+                    // Restore stored original colors
+                    Plotly.restyle(plotDiv, {
+                        'marker.color': [window.originalColors],
+                        'marker.opacity': window.originalOpacity
+                    });
+                } else {
+                    // If no original colors stored, restore to default state
+                    const defaultColor = Array( plotDiv.data[ 0 ].x.length ).fill('#1f77b4');
+                    const defaultOpacity = Array( plotDiv.data[ 0 ].x.length ).fill(0.7);
+                    
+                    Plotly.restyle(plotDiv, {
+                        'marker.color': defaultColor,
+                        'marker.opacity': defaultOpacity
+                    });
+                }
+            }
+        }
+
+
+
+        function copyPointIndex() {
+            navigator.clipboard.writeText(selectedPointIndex.toString()).then(() => {
+                showSuccess('Point index copied to clipboard');
+            });
+        }
+        
+        // Color Scale Editor Functions
+        let colorScaleControlPoints = [];
+        let colorScalePlot = null;
+        let currentColorSource = null;
+        
+        function openColorScaleEditor() {
+            if (!currentStatus || !currentStatus.current_color_source) {
+                showError('No color source selected');
+                return;
+            }
+            
+            currentColorSource = currentStatus.current_color_source;
+            document.getElementById('current-color-source').textContent = currentColorSource;
+            
+            // Always start with a default linear mapping
+            const dataRange = getColorDataRange();
+            colorScaleControlPoints = [
+                                { x: dataRange.min, y: 0 },
+                                { x: dataRange.max, y: 1 }
+                            ];
+            colorScaleControlPoints = [
+                { x: dataRange.min, y: 0 },
+                { x: dataRange.max, y: 1 }
+            ];
+            
+            // Create the color scale plot with the initial data
+            createColorScalePlot();
+            
+            // Show the editor
+            document.getElementById('color-scale-editor').style.display = 'block';
+        }
+        
+        function closeColorScaleEditor() {
+            document.getElementById('color-scale-editor').style.display = 'none';
+            colorScaleControlPoints = [];
+            colorScalePlot = null;
+            currentColorSource = null;
+        }
+        
+        function initializeColorScaleControlPoints() {
+            // Start with no control points - user will add them by clicking
+            colorScaleControlPoints = [];
+        }
+        
+        function createColorScalePlot() {
+            const plotDiv = document.getElementById('color-scale-plot');
+            
+            // Get the data range for the plot
+            const dataRange = getColorDataRange();
+            
+            // Generate smooth curve points
+            const curvePoints = generateSmoothCurve();
+            
+            // Create color gradient for y-axis
+            const colorGradient = createColorGradient();
+            
+            // Create the plot data - only show the curve, control points are invisible
+            const data = [
+                {
+                    x: curvePoints.map(p => p.x),
+                    y: curvePoints.map(p => p.y),
+                    type: 'scatter',
+                    mode: 'lines',
+                    line: { color: '#007bff', width: 2 },
+                    name: 'Color Mapping',
+                    showlegend: false
+                }
+            ];
+            
+            const layout = {
+                title: { text: 'Color Scale', font: { size: 12 } },
+                xaxis: { 
+                    title: { text: 'Index Value', font: { size: 10 } },
+                    range: [dataRange.min, dataRange.max],
+                    tickfont: { size: 9 }
+                },
+                yaxis: { 
+                    title: { text: 'Color Intensity', font: { size: 10 } }, 
+                    range: [0, 1],
+                    tickmode: 'array',
+                    tickvals: [0, 0.25, 0.5, 0.75, 1],
+                    ticktext: ['', '', '', '', ''],
+                    tickfont: { size: 0 }
+                },
+                margin: { l: 0, r: 0, t: 0, b: 0 },
+                width: 300,
+                height: 150,
+                dragmode: false,
+                hovermode: 'closest',
+                annotations: colorGradient
+            };
+            
+            const config = {
+                responsive: true,
+                displayModeBar: false
+            };
+            
+            Plotly.newPlot(plotDiv, data, layout, config).then(() => {
+                colorScalePlot = plotDiv;
+                addColorScaleEventListeners();
+            });
+        }
+        
+        function createColorGradient() {
+            // Create color annotations for the y-axis
+            const annotations = [];
+            const colors = ['#000000', '#444444', '#888888', '#cccccc', '#ffffff'];
+            const positions = [0, 0.25, 0.5, 0.75, 1];
+            
+            positions.forEach((pos, i) => {
+                annotations.push({
+                    x: -0.05, // Position to the left of y-axis
+                    y: pos,
+                    xref: 'paper',
+                    yref: 'y',
+                    text: '',
+                    showarrow: false,
+                    bgcolor: colors[i],
+                    bordercolor: '#333',
+                    borderwidth: 1,
+                    width: 20,
+                    height: 8
+                });
+            });
+            
+            return annotations;
+        }
+        
+        function getColorDataRange() {
+            const plotDiv = document.getElementById('plot');
+            if (!plotDiv || !plotDiv.data || !plotDiv.data[0]) {
+                return { min: 0, max: 1 };
+            }
+            
+            const trace = plotDiv.data[0];
+            const colorData = trace.marker && trace.marker.color ? trace.marker.color : [];
+            
+            if (colorData.length === 0) {
+                return { min: 0, max: 1 };
+            }
+            
+            // Extract numeric values from color data
+            const numericValues = colorData.map(color => {
+                if (typeof color === 'number') return color;
+                if (typeof color === 'string' && color.startsWith('#')) {
+                    // Convert hex to numeric value (simplified)
+                    return parseInt(color.slice(1), 16) / 0xFFFFFF;
+                }
+                return 0;
+            });
+            
+            const min = Math.min(...numericValues);
+            const max = Math.max(...numericValues);
+            
+            return { min, max };
+        }
+        
+        function generateSmoothCurve() {
+            if (colorScaleControlPoints.length === 0) {
+                // No control points - return empty curve
+                return [];
+            }
+            
+            if (colorScaleControlPoints.length === 1) {
+                // Single control point - return horizontal line
+                const dataRange = getColorDataRange();
+                return [
+                    { x: dataRange.min, y: colorScaleControlPoints[0].y },
+                    { x: dataRange.max, y: colorScaleControlPoints[0].y }
+                ];
+            }
+            
+            // Sort control points by x value
+            const sortedPoints = [...colorScaleControlPoints].sort((a, b) => a.x - b.x);
+            
+            // Generate smooth curve using cubic interpolation
+            const curvePoints = [];
+            const numPoints = 500; // Increased for smoother curve
+            
+            for (let i = 0; i < numPoints; i++) {
+                const t = i / (numPoints - 1);
+                const x = sortedPoints[0].x + t * (sortedPoints[sortedPoints.length - 1].x - sortedPoints[0].x);
+                const y = interpolateSmooth(x, sortedPoints);
+                curvePoints.push({ x, y });
+            }
+            
+            return curvePoints;
+        }
+        
+        function interpolateSmooth(x, points) {
+            if (points.length === 1) return points[0].y;
+            if (points.length === 2) {
+                // Linear interpolation
+                const t = (x - points[0].x) / (points[1].x - points[0].x);
+                return points[0].y + t * (points[1].y - points[0].y);
+            }
+            
+            // Find the segment containing x
+            for (let i = 0; i < points.length - 1; i++) {
+                if (x >= points[i].x && x <= points[i + 1].x) {
+                    // Cubic interpolation using 4 points
+                    const p0 = i > 0 ? points[i - 1] : points[i];
+                    const p1 = points[i];
+                    const p2 = points[i + 1];
+                    const p3 = i < points.length - 2 ? points[i + 2] : points[i + 1];
+                    
+                    const t = (x - p1.x) / (p2.x - p1.x);
+                    return cubicInterpolate(p0.y, p1.y, p2.y, p3.y, t);
+                }
+            }
+            
+            // Extrapolation
+            if (x < points[0].x) return points[0].y;
+            return points[points.length - 1].y;
+        }
+        
+        function cubicInterpolate(y0, y1, y2, y3, t) {
+            // Catmull-Rom spline interpolation
+            const a = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
+            const b = y0 - 2.5 * y1 + 2 * y2 - 0.5 * y3;
+            const c = -0.5 * y0 + 0.5 * y2;
+            const d = y1;
+            
+            return a * t * t * t + b * t * t + c * t + d;
+        }
+        
+        function addColorScaleEventListeners() {
+            if (!colorScalePlot) return;
+            
+            // Use click event for adding/dragging control points
+            colorScalePlot.on('plotly_click', function(data) {
+                // Get click coordinates
+                let x, y;
+                if (data.points.length > 0) {
+                    x = data.points[0].x;
+                    y = data.points[0].y;
+                } else {
+                    x = data.xvals[0];
+                    y = data.yvals[0];
+                }
+                
+                // Find if we clicked near an existing control point
+                const clickedPointIndex = findNearestControlPoint(x, y);
+                
+                if (clickedPointIndex !== -1) {
+                    // Clicked near existing control point - start dragging
+                    startDraggingControlPoint(clickedPointIndex);
+                } else {
+                    // Clicked in empty area - add new control point and start dragging
+                    const newPointIndex = addControlPoint(x, y);
+                    startDraggingControlPoint(newPointIndex);
+                }
+            });
+            
+            // Add mouse event listeners for dragging
+            document.addEventListener('mousemove', handleControlPointDrag);
+            document.addEventListener('mouseup', stopDraggingControlPoint);
+        }
+        
+        function findNearestControlPoint(x, y) {
+            const threshold = 0.08; // Increased threshold for easier selection
+            
+            for (let i = 0; i < colorScaleControlPoints.length; i++) {
+                const point = colorScaleControlPoints[i];
+                const distance = Math.sqrt((point.x - x) ** 2 + (point.y - y) ** 2);
+                if (distance < threshold) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        
+        function addControlPoint(x, y) {
+            // Add a new control point
+            colorScaleControlPoints.push({ x, y });
+            
+            // Update the plot
+            updateColorScalePlot();
+            
+            // Return the index of the newly added point
+            return colorScaleControlPoints.length - 1;
+        }
+        
+        let draggingPointIndex = -1;
+        
+        function startDraggingControlPoint(pointIndex) {
+            draggingPointIndex = pointIndex;
+        }
+        
+        function handleControlPointDrag(event) {
+            if (draggingPointIndex === -1) return;
+            
+            const plotDiv = document.getElementById('color-scale-plot');
+            const rect = plotDiv.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Get the plot's data ranges
+            const xRange = plotDiv.layout.xaxis.range;
+            const yRange = plotDiv.layout.yaxis.range;
+            
+            // Convert pixel coordinates to data coordinates
+            const dataX = xRange[0] + (x / rect.width) * (xRange[1] - xRange[0]);
+            const dataY = yRange[1] - (y / rect.height) * (yRange[1] - yRange[0]); // Invert Y axis
+            
+            // Only allow changing Y position (height), keep X position fixed
+            const currentPoint = colorScaleControlPoints[draggingPointIndex];
+            const clampedY = Math.max(0, Math.min(1, dataY));
+            
+            // Only update if position actually changed
+            if (Math.abs(currentPoint.y - clampedY) > 0.001) {
+                currentPoint.y = clampedY;
+                
+                // Update the plot immediately
+                updateColorScalePlot();
+            }
+        }
+        
+        function stopDraggingControlPoint() {
+            if (draggingPointIndex !== -1) {
+                // Apply changes dynamically
+                applyColorScale();
+                draggingPointIndex = -1;
+            }
+        }
+        
+        function updateColorScalePlot() {
+            if (!colorScalePlot) return;
+            
+            const curvePoints = generateSmoothCurve();
+            
+            Plotly.restyle(colorScalePlot, {
+                x: [curvePoints.map(p => p.x)],
+                y: [curvePoints.map(p => p.y)]
+            });
+            
+                        // Update annotations to maintain color gradient
+            const colorGradient = createColorGradient();
+            Plotly.relayout(colorScalePlot, {
+                annotations: colorGradient
+            });
+        }
+        
+        function resetColorScale() {
+            // Create a linear mapping from min to max
+            const dataRange = getColorDataRange();
+            colorScaleControlPoints = [
+                { x: dataRange.min, y: 0 },
+                { x: dataRange.max, y: 1 }
+            ];
+            updateColorScalePlot();
+        }
+        
+        function applyColorScale() {
+            if (!currentColorSource) return;
+            
+            const plotDiv = document.getElementById('plot');
+            if (!plotDiv || !plotDiv.data || !plotDiv.data[0]) {
+                return; // Silently fail for dynamic updates
+            }
+            
+            const trace = plotDiv.data[0];
+            const colorData = trace.marker && trace.marker.color ? trace.marker.color : [];
+            
+            if (colorData.length === 0) {
+                return; // Silently fail for dynamic updates
+            }
+            
+            // Generate the smooth curve for mapping
+            const curvePoints = generateSmoothCurve();
+            
+            // Apply the custom color mapping
+            const newColors = colorData.map(color => {
+                if (typeof color === 'number') {
+                    // Find the corresponding y value on the curve for this x value
+                    const mappedValue = interpolateSmooth(color, curvePoints);
+                    return mappedValue;
+                } else if (typeof color === 'string' && color.startsWith('#')) {
+                    // Convert hex to numeric, map it, then convert back
+                    const numericValue = parseInt(color.slice(1), 16) / 0xFFFFFF;
+                    const mappedValue = interpolateSmooth(numericValue, curvePoints);
+                    return mappedValue;
+                }
+                return color; // Keep original if not numeric
+            });
+            
+            // Update the plot with new colors
+            Plotly.restyle(plotDiv, {
+                'marker.color': [newColors]
+            });
+            
+            // Update the stored original colors
+            window.originalColors = [...newColors];
+        }
+
+        function updateParameterDropdowns() {
+            // Update all matrix parameter dropdowns to include the selected point
+            const matrixDropdowns = document.querySelectorAll('select[id*="param-"][id*="matrix"]');
+            
+            matrixDropdowns.forEach(async (dropdown) => {
+                // Get the parameter info from the dropdown ID
+                const idParts = dropdown.id.split('-');
+                const methodType = idParts[0]; // 'augmentation' or 'index'
+                const paramName = idParts.slice(2).join('-'); // Get the full parameter name
+                
+                // Find the parameter definition
+                let paramDef = null;
+                if (methodType === 'augmentation' && currentStatus.augmentation_methods) {
+                    const methodSelect = document.getElementById('augmentation-method');
+                    if (methodSelect && methodSelect.value) {
+                        const method = currentStatus.augmentation_methods[methodSelect.value];
+                        if (method && method.parameters) {
+                            paramDef = method.parameters[paramName];
+                        }
+                    }
+                } else if (methodType === 'index' && currentStatus.index_methods) {
+                    const methodSelect = document.getElementById('index-method');
+                    if (methodSelect && methodSelect.value) {
+                        const method = currentStatus.index_methods[methodSelect.value];
+                        if (method && method.parameters) {
+                            paramDef = method.parameters[paramName];
+                        }
+                    }
+                }
+                
+                if (paramDef && paramDef.type && paramDef.type.includes('matrix')) {
+                    // Recreate the dropdown with the selected point
+                    const newSelect = await createParameterInput(paramName, paramDef, methodType);
+                    dropdown.parentNode.replaceChild(newSelect, dropdown);
+                }
+            });
+        }
+
+        // Helper functions for showing messages
+        function showSuccess(message) {
+            // Create a temporary success message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'success-message';
+            messageDiv.textContent = message;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #28a745;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 4px;
+                z-index: 3000;
+                font-size: 14px;
+            `;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+
+        function showError(message) {
+            // Create a temporary error message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'error-message';
+            messageDiv.textContent = message;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #dc3545;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 4px;
+                z-index: 3000;
+                font-size: 14px;
+            `;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
+
+        // Update data source dropdowns
+        function updateDataSourceDropdowns() {
+            if (!currentStatus || !currentStatus.available_augmentations) return;
+            
+            // Update augmentation data source dropdown
+            const augDataSourceSelect = document.getElementById('augmentation-data-source');
+            if (augDataSourceSelect) {
+                augDataSourceSelect.innerHTML = '';
+                currentStatus.available_augmentations.forEach(dm => {
+                    const option = document.createElement('option');
+                    option.value = dm;
+                    const shape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[dm];
+                    if (shape) {
+                        option.textContent = `${dm} (${shape.join('×')})`;
+                    } else {
+                        option.textContent = dm;
+                    }
+                    augDataSourceSelect.appendChild(option);
+                });
+                // Add change listener to update parameter dropdowns when data source changes
+                augDataSourceSelect.addEventListener('change', function() {
+                    resetMatrixParameterDropdowns('augmentation');
+                    updateParameterDropdowns();
+                    updateDataSourceInfo();
+                });
+            }
+            
+            // Update index data source dropdown
+            const indexDataSourceSelect = document.getElementById('index-data-source');
+            if (indexDataSourceSelect) {
+                indexDataSourceSelect.innerHTML = '';
+                currentStatus.available_augmentations.forEach(dm => {
+                    const option = document.createElement('option');
+                    option.value = dm;
+                    const shape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[dm];
+                    if (shape) {
+                        option.textContent = `${dm} (${shape.join('×')})`;
+                    } else {
+                        option.textContent = dm;
+                    }
+                    indexDataSourceSelect.appendChild(option);
+                });
+                // Add change listener to update parameter dropdowns when data source changes
+                indexDataSourceSelect.addEventListener('change', function() {
+                    resetMatrixParameterDropdowns('index');
+                    updateParameterDropdowns();
+                    updateDataSourceInfo();
+                });
+            }
+            
+            // Update data source info display
+            updateDataSourceInfo();
+        }
+        
+        // Update data source info display
+        function updateDataSourceInfo() {
+            // Update augmentation data source info
+            const augDataSourceSelect = document.getElementById('augmentation-data-source');
+            const augDataSourceInfo = document.getElementById('augmentation-data-source-info');
+            if (augDataSourceSelect && augDataSourceInfo) {
+                const selectedSource = augDataSourceSelect.value;
+                const shape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[selectedSource];
+                if (shape) {
+                    augDataSourceInfo.textContent = `Shape: ${shape.join(' × ')}`;
+                    augDataSourceInfo.style.display = 'block';
+                } else {
+                    augDataSourceInfo.style.display = 'none';
+                }
+            }
+            
+            // Update index data source info
+            const indexDataSourceSelect = document.getElementById('index-data-source');
+            const indexDataSourceInfo = document.getElementById('index-data-source-info');
+            if (indexDataSourceSelect && indexDataSourceInfo) {
+                const selectedSource = indexDataSourceSelect.value;
+                const shape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[selectedSource];
+                if (shape) {
+                    indexDataSourceInfo.textContent = `Shape: ${shape.join(' × ')}`;
+                    indexDataSourceInfo.style.display = 'block';
+                } else {
+                    indexDataSourceInfo.style.display = 'none';
+                }
+            }
+        }
+        
+        // Reset matrix parameter dropdowns when data source changes
+        function resetMatrixParameterDropdowns(methodType) {
+            const paramsContainer = document.getElementById(`${methodType}-parameters`);
+            if (!paramsContainer) return;
+            
+            // Find all matrix parameter dropdowns and reset them
+            const matrixDropdowns = paramsContainer.querySelectorAll('select[id*="param-"][id*="matrix"]');
+            matrixDropdowns.forEach(dropdown => {
+                dropdown.value = ''; // Reset to empty selection
+            });
+        }
+
+        // Dynamic parameter generation functions
+        async function updateAugmentationParameters() {
+            const methodSelect = document.getElementById('augmentation-method');
+            const paramsContainer = document.getElementById('augmentation-parameters');
+            
+            if (!methodSelect || !paramsContainer || !currentStatus) return;
+            
+            const selectedMethod = methodSelect.value;
+            if (!selectedMethod) {
+                paramsContainer.innerHTML = '';
+                return;
+            }
+            
+            const methodDef = currentStatus.augmentation_methods[selectedMethod];
+            if (!methodDef || !methodDef.parameters) {
+                paramsContainer.innerHTML = '<div class="parameter-group">No parameters required</div>';
+                return;
+            }
+            
+            await generateParameterInputs(paramsContainer, methodDef.parameters, 'augmentation');
+            // Update parameter dropdowns when method changes
+            updateParameterDropdowns();
+        }
+
+        async function updateIndexParameters() {
+            const methodSelect = document.getElementById('index-method');
+            const paramsContainer = document.getElementById('index-parameters');
+            
+            if (!methodSelect || !paramsContainer || !currentStatus) return;
+            
+            const selectedMethod = methodSelect.value;
+            if (!selectedMethod) {
+                paramsContainer.innerHTML = '';
+                return;
+            }
+            
+            const methodDef = currentStatus.index_methods[selectedMethod];
+            if (!methodDef || !methodDef.parameters) {
+                paramsContainer.innerHTML = '<div class="parameter-group">No parameters required</div>';
+                return;
+            }
+            
+            await generateParameterInputs(paramsContainer, methodDef.parameters, 'index');
+            // Update parameter dropdowns when method changes
+            updateParameterDropdowns();
+        }
+
+        async function generateParameterInputs(container, parameters, methodType) {
+            container.innerHTML = '';
+            
+            for (const [paramName, paramDef] of Object.entries(parameters)) {
+                const paramGroup = document.createElement('div');
+                paramGroup.className = 'parameter-group';
+                
+                const label = document.createElement('label');
+                label.htmlFor = `${methodType}-param-${paramName}`;
+                label.innerHTML = `${paramName}${paramDef.required ? '<span class="parameter-required">*</span>' : ''}`;
+                
+                const input = await createParameterInput(paramName, paramDef, methodType);
+                
+                paramGroup.appendChild(label);
+                paramGroup.appendChild(input);
+                container.appendChild(paramGroup);
+            }
+        }
+
+        async function createParameterInput(paramName, paramDef, methodType) {
+            const inputId = `${methodType}-param-${paramName}`;
+            
+            if (paramDef.type === 'kwargs') {
+                const textarea = document.createElement('textarea');
+                textarea.id = inputId;
+                textarea.placeholder = '{"key": "value"}';
+                textarea.className = 'form-control';
+                return textarea;
+            } else if (typeof paramDef.type === 'string' && paramDef.type.includes('matrix')) {
+                // Matrix parameter - create dropdown for augmentations with shape validation
+                const select = document.createElement('select');
+                select.id = inputId;
+                select.className = 'form-control';
+                
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Loading compatible data managers...';
+                select.appendChild(defaultOption);
+                
+                // Load compatible data managers asynchronously
+                if (currentStatus && currentStatus.available_augmentations) {
+                    try {
+                        const compatibleDMs = await getCompatibleDataManagers(paramDef.type, methodType);
+                        
+                        // Clear loading message
+                        select.innerHTML = '';
+                        
+                        const newDefaultOption = document.createElement('option');
+                        newDefaultOption.value = '';
+                        newDefaultOption.textContent = 'Select an augmentation...';
+                        select.appendChild(newDefaultOption);
+                        
+                        // Add point selection options from any compatible data manager
+                        if (selectedPoint && selectedPointIndex !== null) {
+                            const pointDMs = await getCompatiblePointSources(paramDef.type, methodType);
+                                // Group label (disabled)
+                            const header = document.createElement('option');
+                            header.disabled = true;
+                            header.textContent = '— Selected point —';
+                            select.appendChild(header);
+
+                            // Get all data managers to show point options for all of them
+                            const allDMs = currentStatus.available_augmentations || [];
+                            allDMs.forEach(dmName => {
+                                const option = document.createElement('option');
+                                option.value = `point:${selectedPointIndex}:${dmName}`;
+                                
+                                // Get the shape of this data manager to show point size
+                                const dmShape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[dmName];
+                                if (dmShape && dmShape.length >= 2) {
+                                    const pointSize = dmShape[1]; // Number of features in the point
+                                    option.textContent = `📍 Point ${selectedPointIndex} from ${dmName} (${pointSize} features)`;
+                                } else {
+                                    option.textContent = `📍 Point ${selectedPointIndex} from ${dmName}`;
+                                }
+                                option.style.fontWeight = 'bold';
+                                
+                                // Check if this data manager is compatible for point selection
+                                const isCompatible = pointDMs.includes(dmName);
+                                if (isCompatible) {
+                                    option.style.color = '#007bff';
+                                } else {
+                                    option.disabled = true;
+                                    option.style.color = '#999';
+                                    option.textContent += ' (incompatible)';
+                                }
+                                select.appendChild(option);
+                            });
+
+                            // Add separator
+                            const separator = document.createElement('option');
+                            separator.disabled = true;
+                            separator.textContent = '──────────';
+                            select.appendChild(separator);
+                        }
+                        
+                        compatibleDMs.forEach(dm => {
+                            const option = document.createElement('option');
+                            option.value = dm.name;
+                            if (dm.shape) {
+                                option.textContent = `${dm.name} (${dm.shape.join('×')})`;
+                            } else {
+                                option.textContent = `${dm.name} (unknown shape)`;
+                            }
+                            if (!dm.compatible) {
+                                option.disabled = true;
+                                option.style.color = '#999';
+                                option.textContent += ' (incompatible)';
+                            }
+                            select.appendChild(option);
+                        });
+                    } catch (error) {
+                        console.error('Failed to load compatible data managers:', error);
+                        select.innerHTML = '<option value="">Error loading options</option>';
+                    }
+                }
+                
+                return select;
+            } else if (paramDef.type === 'int') {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.id = inputId;
+                input.className = 'form-control';
+                input.placeholder = 'Enter integer value';
+                return input;
+            } else if (paramDef.type === 'float') {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.step = 'any';
+                input.id = inputId;
+                input.className = 'form-control';
+                input.placeholder = 'Enter float value';
+                return input;
+            } else if (paramDef.type === 'string') {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = inputId;
+                input.className = 'form-control';
+                input.placeholder = 'Enter string value';
+                return input;
+            } else {
+                // Default to text input
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = inputId;
+                input.className = 'form-control';
+                input.placeholder = `Enter ${paramName}`;
+                return input;
+            }
+        }
+
+        async function getCompatibleDataManagers(matrixType, methodType) {
+            const compatibleDMs = [];
+            
+            // Get the selected data source's shape for compatibility checking
+            const dataSourceSelect = document.getElementById(`${methodType}-data-source`);
+            const selectedDataSource = dataSourceSelect ? dataSourceSelect.value : 'primary';
+            
+            // Get the selected data source's shape
+            let selectedShape = null;
+            if (selectedDataSource === 'primary') {
+                // For primary, get shape from data_manager_shapes if available, otherwise from data_info
+                if (currentStatus?.data_manager_shapes?.primary) {
+                    selectedShape = currentStatus.data_manager_shapes.primary;
+                } else if (currentStatus?.data_info?.shape) {
+                    selectedShape = currentStatus.data_info.shape;
+                }
+            } else {
+                // For other data managers, get shape from data_manager_shapes
+                if (currentStatus?.data_manager_shapes?.[selectedDataSource]) {
+                    selectedShape = currentStatus.data_manager_shapes[selectedDataSource];
+                } else {
+                    try {
+                        selectedShape = await getDataManagerShape(selectedDataSource);
+                    } catch (error) {
+                        console.warn(`Failed to get shape for ${selectedDataSource}:`, error);
+                    }
+                }
+            }
+            
+            if (!selectedShape || selectedShape.length < 2) {
+                // If we don't have current shape info, return all data managers
+                if (currentStatus && currentStatus.available_augmentations) {
+                    return currentStatus.available_augmentations.map(dm => ({ 
+                        name: dm, 
+                        shape: [0, 0],
+                        compatible: false 
+                    }));
+                }
+                return [];
+            }
+            
+            const n = selectedShape[0]; // Number of data points
+            const m = selectedShape[1]; // Size of each data point
+            
+            // Parse matrix type to extract shape constraints
+            const shapeConstraints = parseMatrixType(matrixType);
+            
+            if (currentStatus && currentStatus.available_augmentations) {
+                // Process data managers sequentially to avoid overwhelming the server
+                for (const dmName of currentStatus.available_augmentations) {
+                    try {
+                        // Get shape info for this data manager
+                        const dmShape = await getDataManagerShape(dmName);
+                        const compatible = dmShape && isShapeCompatible(dmShape, shapeConstraints, n, m);
+                        compatibleDMs.push({ 
+                            name: dmName, 
+                            shape: dmShape || [0, 0],
+                            compatible: compatible
+                        });
+                    } catch (error) {
+                        console.warn(`Failed to get shape for ${dmName}:`, error);
+                        compatibleDMs.push({ 
+                            name: dmName, 
+                            shape: [0, 0],
+                            compatible: false 
+                        });
+                    }
+                }
+            }
+            
+            return compatibleDMs;
+        }
+
+        // Compute which data managers can provide the selected point for a given matrix type
+        async function getCompatiblePointSources(matrixType, methodType) {
+            const pointDMs = [];
+            if (!currentStatus || !currentStatus.available_augmentations) return pointDMs;
+
+            // Get the selected data source's shape for compatibility checking
+                        const dataSourceSelect = document.getElementById(`${methodType}-data-source`);
+            const selectedDataSource = dataSourceSelect ? dataSourceSelect.value : 'primary';
+            
+            // Get the selected data source's shape
+            let selectedShape = null;
+            if (selectedDataSource === 'primary') {
+                // For primary, get shape from data_manager_shapes if available, otherwise from data_info
+                if (currentStatus?.data_manager_shapes?.primary) {
+                    selectedShape = currentStatus.data_manager_shapes.primary;
+                } else if (currentStatus?.data_info?.shape) {
+                    selectedShape = currentStatus.data_info.shape;
+                }
+            } else {
+                // For other data managers, get shape from data_manager_shapes
+                if (currentStatus?.data_manager_shapes?.[selectedDataSource]) {
+                    selectedShape = currentStatus.data_manager_shapes[selectedDataSource];
+                } else {
+                    try {
+                        selectedShape = await getDataManagerShape(selectedDataSource);
+                    } catch (error) {
+                        console.warn(`Failed to get shape for ${selectedDataSource}:`, error);
+                    }
+                }
+            }
+            
+            if (!selectedShape || selectedShape.length < 2) return pointDMs;
+            const n = selectedShape[0];
+            const m = selectedShape[1];
+
+            // Only allow point options for vector-like parameters
+            // Allow if matrixType contains a single free dimension with m anywhere, or a 1×m / m×1 style
+            const constraints = parseMatrixType(matrixType);
+            if (!constraints) return pointDMs;
+
+            // We consider a point compatible if its feature dimension matches m (for rows or columns)
+            const requiresM = constraints.includes('m');
+            if (!requiresM) return pointDMs;
+
+            for (const dmName of currentStatus.available_augmentations) {
+                try {
+                    const dmShape = await getDataManagerShape(dmName);
+                    if (!dmShape || dmShape.length < 2) continue;
+                    const dmN = dmShape[0];
+                    const dmM = dmShape[1];
+                    // Must have same number of points and same feature size to take the i-th point
+                    if (dmN === n && dmM === m) {
+                        pointDMs.push(dmName);
+                    }
+                    
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            return pointDMs;
+        }
+
+        function parseMatrixType(matrixType) {
+            // Parse matrix type like "(n, i)matrix" or "(i, m)matrix"
+            const match = matrixType.match(/\(([^)]+)\)matrix/);
+            if (!match) return null;
+            
+            const dimensions = match[1].split(',').map(d => d.trim());
+            return dimensions;
+        }
+
+        async function getDataManagerShape(dmName) {
+            // Get shape info for a specific data manager from the status data
+            if (currentStatus && currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[dmName]) {
+                return currentStatus.data_manager_shapes[dmName];
+            }
+            
+            // Fallback to API call if not in status data
+            try {
+                const response = await fetch(`/api/dataset-info?data_manager=${dmName}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.shape && data.shape.length >= 2) {
+                        return data.shape;
+                    }
+                }
+            } catch (error) {
+                console.warn(`Failed to get shape for ${dmName}:`, error);
+            }
+            
+            // If we can't get the shape, return null
+            return null;
+        }
+
+        function isShapeCompatible(dmShape, constraints, n, m) {
+            if (!constraints || constraints.length !== dmShape.length) {
+                return false;
+            }
+            
+            for (let i = 0; i < constraints.length; i++) {
+                const constraint = constraints[i];
+                const actualSize = dmShape[i];
+                
+                if (constraint === 'n') {
+                    if (actualSize !== n) return false;
+                } else if (constraint === 'm') {
+                    if (actualSize !== m) return false;
+                } else if (constraint === 'i' || constraint === 'j') {
+                    // i and j are free variables - any size is acceptable
+                    continue;
+                } else {
+                    // If it's a number, it must match exactly
+                    const expectedSize = parseInt(constraint);
+                    if (!isNaN(expectedSize) && actualSize !== expectedSize) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        }
+
+        function collectParameters(methodType, methodName) {
+            const parameters = {};
+            const methodDef = methodType === 'augmentation' 
+                ? currentStatus.augmentation_methods[methodName]
+                : currentStatus.index_methods[methodName];
+            
+            if (!methodDef || !methodDef.parameters) {
+                return parameters;
+            }
+            
+            Object.entries(methodDef.parameters).forEach(([paramName, paramDef]) => {
+                const inputId = `${methodType}-param-${paramName}`;
+                const input = document.getElementById(inputId);
+                
+                if (!input) return;
+                
+                let value = input.value.trim();
+                
+                // Skip empty values unless required
+                if (!value && !paramDef.required) {
+                    return;
+                }
+                
+                // Validate required parameters
+                if (paramDef.required && !value) {
+                    throw new Error(`Required parameter '${paramName}' is missing`);
+                }
+                
+                // Parse value based on type
+                if (paramDef.type === 'kwargs') {
+                    try {
+                        parameters[paramName] = JSON.parse(value);
+                    } catch (error) {
+                        throw new Error(`Invalid JSON for parameter '${paramName}': ${error.message}`);
+                    }
+                } else if (paramDef.type === 'int') {
+                    const intValue = parseInt(value);
+                    if (isNaN(intValue)) {
+                        throw new Error(`Parameter '${paramName}' must be an integer`);
+                    }
+                    parameters[paramName] = intValue;
+                } else if (paramDef.type === 'float') {
+                    const floatValue = parseFloat(value);
+                    if (isNaN(floatValue)) {
+                        throw new Error(`Parameter '${paramName}' must be a number`);
+                    }
+                    parameters[paramName] = floatValue;
+                } else {
+                    // String, matrix, or other types - use as-is
+                    parameters[paramName] = value;
+                }
+            });
+            
+            return parameters;
+        }
+
+        // Control functions
+        async function switchDataManager(dataManager = null) {
+            if (!dataManager) {
+                const selectElement = document.getElementById('data-manager-select');
+                dataManager = selectElement?.value;
+            }
+            if (!dataManager) return;
+            
+            try {
+                showLoadingOverlay('Switching data manager...');
+                const response = await fetch('/api/switch-data-manager', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data_manager: dataManager })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    await loadStatus();
+                    await loadAndRenderPlot();
+                    await refreshDataTree();
+                } else {
+                    throw new Error(result.error || 'Failed to switch data manager');
+                }
+            } catch (error) {
+                console.error('Error switching data manager:', error);
+                showError('Failed to switch data manager: ' + error.message);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        async function setColorSourceFromIndex(indexName, dmName) {
+            if (!indexName || !dmName) return;
+            
+            try {
+                showLoadingOverlay('Setting color source...');
+                const colorSource = `index:${indexName}`;
+                const response = await fetch('/api/set-color-source', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        color_source: colorSource,
+                        source_data_manager: dmName 
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    await loadAndRenderPlot();
+                    await refreshDataTree();
+                    showSuccess(`Color set to index: ${indexName} from ${dmName}`);
+                } else {
+                    throw new Error(result.error || 'Failed to set color source');
+                }
+            } catch (error) {
+                console.error('Error setting color source:', error);
+                showError('Failed to set color source: ' + error.message);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        async function createAugmentation() {
+            const method = document.getElementById('augmentation-method').value;
+            const dataSource = document.getElementById('augmentation-data-source').value;
+            const type = document.getElementById('augmentation-type').value || method;
+            
+            if (!method) {
+                showError('Please select an augmentation method');
+                return;
+            }
+            
+            if (!dataSource) {
+                showError('Please select a data source');
+                return;
+            }
+            
+            // Collect parameters from dynamically generated inputs
+            let parameters = {};
+            try {
+                parameters = collectParameters('augmentation', method);
+            } catch (error) {
+                showError(error.message);
+                return;
+            }
+            
+            try {
+                showLoadingOverlay('Creating augmentation...');
+                const response = await fetch('/api/augment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method,
+                        augmentation_type: type,
+                        data_source: dataSource,
+                        parameters
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    await loadStatus();
+                    await loadAndRenderPlot();
+                    await refreshDataTree();
+                    showSuccess('Augmentation created successfully!');
+                } else {
+                    throw new Error(result.error || 'Failed to create augmentation');
+                }
+            } catch (error) {
+                console.error('Error creating augmentation:', error);
+                showError('Failed to create augmentation: ' + error.message);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        async function createIndex() {
+            const method = document.getElementById('index-method').value;
+            const dataSource = document.getElementById('index-data-source').value;
+            const type = document.getElementById('index-type').value || method;
+            
+            if (!method) {
+                showError('Please select an index method');
+                return;
+            }
+            
+            if (!dataSource) {
+                showError('Please select a data source');
+                return;
+            }
+            
+            // Collect parameters from dynamically generated inputs
+            let parameters = {};
+            try {
+                parameters = collectParameters('index', method);
+            } catch (error) {
+                showError(error.message);
+                return;
+            }
+            
+            try {
+                showLoadingOverlay('Creating index...');
+                const response = await fetch('/api/index', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method,
+                        index_type: type,
+                        data_source: dataSource,
+                        parameters
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    await loadStatus();
+                    await loadAndRenderPlot();
+                    await refreshDataTree();
+                    showSuccess('Index created successfully!');
+                } else {
+                    throw new Error(result.error || 'Failed to create index');
+                }
+            } catch (error) {
+                console.error('Error creating index:', error);
+                showError('Failed to create index: ' + error.message);
+            } finally {
+                hideLoadingOverlay();
+            }
+        }
+
+        // Quick action functions for no-data suggestions
+        async function createTSNEAugmentation() {
+            document.getElementById('augmentation-method').value = 'tsne';
+            document.getElementById('augmentation-data-source').value = 'primary';
+            document.getElementById('augmentation-type').value = 'tsne_2d';
+            document.getElementById('augmentation-params').value = '{"n_components": 2}';
+            await createAugmentation();
+        }
+
+        async function createUMAPAugmentation() {
+            document.getElementById('augmentation-method').value = 'umap';
+            document.getElementById('augmentation-data-source').value = 'primary';
+            document.getElementById('augmentation-type').value = 'umap_2d';
+            document.getElementById('augmentation-params').value = '{"n_components": 2}';
+            await createAugmentation();
+        }
+
+        async function switchToSelectedDataManager() {
+            const selectElement = document.getElementById('switch-data-manager-select');
+            if (selectElement && selectElement.value) {
+                await switchDataManager(selectElement.value);
+                // Reset the dropdown
+                selectElement.value = '';
+            }
+        }
+
+        function showLoadingOverlay(message) {
+            const overlay = document.getElementById('loading-overlay');
+            document.getElementById('loading-message').textContent = message;
+            overlay.style.display = 'flex';
+        }
+
+        function hideLoadingOverlay() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            document.querySelector('.sidebar').insertBefore(errorDiv, document.querySelector('.sidebar').firstChild);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            document.querySelector('.sidebar').insertBefore(successDiv, document.querySelector('.sidebar').firstChild);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+
+        // Tree state management
+        let treeState = {
+            expandedNodes: new Set(),
+            selectedNode: null
+        };
+
+        // Tree viewer functions
+        async function buildDataTree() {
+            try {
+                const treeContainer = document.getElementById('data-tree');
+                
+                if (!currentStatus) {
+                    treeContainer.innerHTML = '<div class="tree-empty">No data available</div>';
+                    return;
+                }
+
+                // Check if tree already exists and if we need to rebuild
+                const existingTree = treeContainer.querySelector('.tree-node');
+                const needsRebuild = shouldRebuildTree();
+                
+                if (existingTree && !needsRebuild) {
+                    // Update existing tree instead of regenerating
+                    await updateExistingTree();
+                } else {
+                    // Full tree rebuild (initial creation or new augmentations)
+                    const treeHTML = await generateTreeHTML();
+                    treeContainer.innerHTML = treeHTML;
+                    addTreeEventListeners();
+                }
+                
+                // Update current data manager info
+                updateCurrentDataInfo();
+                
+            } catch (error) {
+                console.error('Error building data tree:', error);
+                document.getElementById('data-tree').innerHTML = '<div class="tree-empty">Error loading tree</div>';
+            }
+        }
+
+        function shouldRebuildTree() {
+            // Check if we have new augmentations that aren't in the current tree
+            if (!currentStatus || !currentStatus.augmentation_hierarchy) return true;
+            
+            const existingNodes = document.querySelectorAll('.tree-node-header[data-dm]');
+            const existingDMs = Array.from(existingNodes).map(node => node.getAttribute('data-dm'));
+            
+            // Check if all available augmentations are present in the tree
+            const allAvailableDMs = ['primary', ...(currentStatus.available_augmentations || [])];
+            
+            // Check for new data managers
+            const hasNewDataManagers = allAvailableDMs.some(dm => !existingDMs.includes(dm));
+            
+            // Check for new indexes by comparing with the last known indexes
+            const hasNewIndexes = checkForNewIndexes();
+            
+            return hasNewDataManagers || hasNewIndexes;
+        }
+        
+        function checkForNewIndexes() {
+            // Get current indexes from the tree
+            const existingIndexes = document.querySelectorAll('.tree-item[data-index]');
+            const existingIndexNames = Array.from(existingIndexes).map(item => item.getAttribute('data-index'));
+            
+            // Get all available indexes from current status
+            const availableIndexes = currentStatus.available_indexes || [];
+            
+            // Check if there are any new indexes
+            return availableIndexes.some(indexName => !existingIndexNames.includes(indexName));
+        }
+
+        async function updateExistingTree() {
+            // Only update the "current" indicators and data manager info
+            // Preserve expanded/collapsed state
+            updateCurrentIndicators();
+            updateCurrentDataInfo();
+        }
+
+        function updateCurrentIndicators() {
+            // Remove all "current" indicators
+            document.querySelectorAll('.tree-item-count').forEach(count => {
+                if (count.textContent === 'current') {
+                    count.remove();
+                }
+            });
+
+            // Add "current" indicator to the current data manager
+            const currentDM = currentStatus.current_data_manager;
+            const currentHeader = document.querySelector(`.tree-node-header[data-dm="${currentDM}"]`);
+            if (currentHeader) {
+                const countDiv = document.createElement('div');
+                countDiv.className = 'tree-item-count';
+                countDiv.textContent = 'current';
+                currentHeader.appendChild(countDiv);
+            }
+        }
+
+        async function generateTreeHTML() {
+            if (!currentStatus) return '<div class="tree-empty">No data available</div>';
+
+            let html = '';
+            
+            // Build tree starting with primary data manager
+            const primaryDataManager = 'primary';
+            const currentDataManager = currentStatus.current_data_manager;
+            const isPrimaryCurrent = primaryDataManager === currentDataManager;
+            const isPrimaryExpanded = treeState.expandedNodes.has(primaryDataManager);
+            
+            html += `
+                <div class="tree-node">
+                    <div class="tree-toggle ${isPrimaryExpanded ? 'expanded' : ''}" data-dm="${primaryDataManager}">${isPrimaryExpanded ? '▼' : '▶'}</div>
+                    <div class="tree-node-header tooltip" data-dm="${primaryDataManager}" title="Primary data manager containing original data">
+                        <div class="tree-icon">📊</div>
+                        <div class="tree-label">${primaryDataManager}</div>
+                        ${isPrimaryCurrent ? '<div class="tree-item-count">current</div>' : ''}
+                    </div>
+                    <div class="tree-node-content ${isPrimaryExpanded ? '' : 'collapsed'}">
+                        ${await generateDataManagerContent(primaryDataManager)}
+                    </div>
+                </div>
+            `;
+            
+            return html || '<div class="tree-empty">No data managers found</div>';
+        }
+
+        async function generateDataManagerContent(dmName) {
+            let html = '';
+            
+            try {
+                // Get indexes for this specific data manager
+                const indexesResponse = await fetch(`/api/indexes?data_manager=${dmName}`);
+                if (indexesResponse.ok) {
+                    const indexesData = await indexesResponse.json();
+                    const indexes = indexesData.indexes || {};
+                    const indexNames = indexesData.index_names || {};
+                    
+                    if (Object.keys(indexes).length > 0) {
+                        html += '<div class="tree-item"><div class="tree-item-icon">🔍</div><div class="tree-item-label">Indexes</div></div>';
+                        
+                        for (const [indexName, indexData] of Object.entries(indexes)) {
+                            const displayName = indexNames[indexName] || indexName;
+                            const count = Array.isArray(indexData) ? indexData.length : 'N/A';
+                            
+                            // Check if this index has valid shape for coloring
+                            const currentDataShape = currentStatus.data_info ? currentStatus.data_info.shape : null;
+                            const isValidForColoring = currentDataShape && Array.isArray(indexData) && 
+                                (indexData.length === currentDataShape[0] || indexData.length === currentDataShape[0]);
+                            
+                            const tooltip = `Index: ${displayName}\nType: ${indexName}\nSize: ${count} items\nSource: ${dmName}${isValidForColoring ? '\n✅ Valid for coloring' : '\n❌ Invalid shape for coloring'}`;
+                            const colorClass = isValidForColoring ? 'valid-color' : 'invalid-color';
+                            
+                            html += `
+                                <div class="tree-item tooltip ${colorClass}" title="${tooltip}" data-index="${indexName}" data-dm="${dmName}">
+                                    <div class="tree-item-icon">📋</div>
+                                    <div class="tree-item-label">${displayName}</div>
+                                    <div class="tree-item-count">${count}</div>
+                                    ${isValidForColoring ? '<div class="tree-item-badge">🎨</div>' : ''}
+                                </div>
+                            `;
+                        }
+                    } else {
+                        html += '<div class="tree-empty">No indexes</div>';
+                    }
+                }
+                
+                // Show augmentations as expandable nodes for this data manager
+                if (currentStatus.augmentation_hierarchy && currentStatus.augmentation_hierarchy[dmName]) {
+                    const children = currentStatus.augmentation_hierarchy[dmName];
+                    
+                    if (children.length > 0) {
+                        html += '<div class="tree-item"><div class="tree-item-icon">🔄</div><div class="tree-item-label">Augmentations</div></div>';
+                        
+                        for (const childName of children) {
+                            const isCurrent = childName === currentStatus.current_data_manager;
+                            const isChildExpanded = treeState.expandedNodes.has(childName);
+                            const tooltip = `Data Manager: ${childName}\nClick to expand or switch to this data manager`;
+                            
+                            html += `
+                                <div class="tree-node" style="margin-left: 16px;">
+                                    <div class="tree-toggle ${isChildExpanded ? 'expanded' : ''}" data-dm="${childName}">${isChildExpanded ? '▼' : '▶'}</div>
+                                    <div class="tree-node-header tooltip" data-dm="${childName}" title="${tooltip}">
+                                        <div class="tree-icon">📈</div>
+                                        <div class="tree-label">${childName}</div>
+                                        ${isCurrent ? '<div class="tree-item-count">current</div>' : ''}
+                                    </div>
+                                    <div class="tree-node-content ${isChildExpanded ? '' : 'collapsed'}">
+                                        ${await generateDataManagerContent(childName)}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        html += '<div class="tree-empty">No augmentations</div>';
+                    }
+                } else {
+                    html += '<div class="tree-empty">No augmentations</div>';
+                }
+                
+            } catch (error) {
+                console.error('Error generating content for data manager:', dmName, error);
+                html += '<div class="tree-empty">Error loading content</div>';
+            }
+            
+            return html;
+        }
+
+        async function updateCurrentDataInfo() {
+            const infoContainer = document.getElementById('current-data-info');
+            
+            if (!currentStatus || !currentStatus.data_info) {
+                infoContainer.innerHTML = '<div class="data-info-loading">No data info available</div>';
+                return;
+            }
+            
+            const dataInfo = currentStatus.data_info;
+            const currentDM = currentStatus.current_data_manager;
+            
+            let html = `
+                <div class="data-info-item">
+                    <span class="data-info-label">Data Manager:</span>
+                    <span class="data-info-value">${currentDM}</span>
+                </div>
+            `;
+            
+            if (dataInfo.shape) {
+                html += `
+                    <div class="data-info-item">
+                        <span class="data-info-label">Shape:</span>
+                        <span class="data-info-value">${dataInfo.shape.join(' × ')}</span>
+                    </div>
+                `;
+            }
+            
+            if (dataInfo.dimensions) {
+                html += `
+                    <div class="data-info-item">
+                        <span class="data-info-label">Dimensions:</span>
+                        <span class="data-info-value">${dataInfo.dimensions}D</span>
+                    </div>
+                `;
+            }
+            
+            infoContainer.innerHTML = html;
+        }
+
+        function addTreeEventListeners() {
+            // Add click handlers for toggle buttons (expand/collapse only)
+            document.querySelectorAll('.tree-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent event bubbling
+                    
+                    const node = this.closest('.tree-node');
+                    const content = node.querySelector('.tree-node-content');
+                    const dmName = this.getAttribute('data-dm');
+                    
+                    if (!content) {
+                        console.error('Missing content element');
+                        return;
+                    }
+                    
+                    // Toggle expanded state
+                    const isExpanded = this.classList.contains('expanded');
+                    
+                    if (isExpanded) {
+                        // Collapse
+                        this.classList.remove('expanded');
+                        content.classList.add('collapsed');
+                        this.textContent = '▶';
+                        treeState.expandedNodes.delete(dmName);
+                    } else {
+                        // Expand
+                        this.classList.add('expanded');
+                        content.classList.remove('collapsed');
+                        this.textContent = '▼';
+                        treeState.expandedNodes.add(dmName);
+                    }
+                });
+            });
+
+            // Add click handlers for tree node headers (selection only)
+            document.querySelectorAll('.tree-node-header').forEach(header => {
+                header.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent event bubbling
+                    
+                    const dmName = this.getAttribute('data-dm');
+                    
+                    // Switch to this data manager
+                    if (dmName && currentStatus.available_augmentations.includes(dmName)) {
+                        switchDataManager(dmName);
+                    }
+                });
+            });
+            
+            // Add click handlers for valid indexes to set color source
+            document.querySelectorAll('.tree-item.valid-color').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent event bubbling
+                    
+                    const indexName = this.getAttribute('data-index');
+                    const dmName = this.getAttribute('data-dm');
+                    
+                    if (indexName && dmName) {
+                        setColorSourceFromIndex(indexName, dmName);
+                    }
+                });
+            });
+            
+            // Add click handlers for color scale editor (on the paint emoji)
+            document.querySelectorAll('.tree-item.valid-color .tree-item-badge').forEach(badge => {
+                badge.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent event bubbling
+                    openColorScaleEditor();
+                });
+            });
+        }
+
+        // Refresh tree when data changes
+        async function refreshDataTree() {
+            // Preserve expanded state when refreshing
+            const currentExpanded = new Set(treeState.expandedNodes);
+            await buildDataTree();
+            await updateCurrentDataInfo();
+            
+            // Restore expanded state
+            treeState.expandedNodes = currentExpanded;
+            
+            // Update the visual state of toggle buttons
+            document.querySelectorAll('.tree-toggle').forEach(toggle => {
+                const dmName = toggle.getAttribute('data-dm');
+                if (treeState.expandedNodes.has(dmName)) {
+                    toggle.classList.add('expanded');
+                    toggle.textContent = '▼';
+                    const content = toggle.closest('.tree-node').querySelector('.tree-node-content');
+                    if (content) content.classList.remove('collapsed');
+                } else {
+                    toggle.classList.remove('expanded');
+                    toggle.textContent = '▶';
+                    const content = toggle.closest('.tree-node').querySelector('.tree-node-content');
+                    if (content) content.classList.add('collapsed');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
