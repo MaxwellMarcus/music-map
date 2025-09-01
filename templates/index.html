@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Viewer</title>
+    <title>Musical Artists Visualization</title>
     <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <style>
         * {
             margin: 0;
@@ -14,195 +15,34 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            background: #000;
+            color: #fff;
             overflow: hidden;
             height: 100vh;
+            margin: 0;
+            padding: 0;
         }
 
         .app-container {
-            display: flex;
             height: 100vh;
-        }
-
-        .sidebar {
-            width: 280px;
-            background: white;
-            border-right: 1px solid #e1e5e9;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
+            width: 100vw;
         }
 
         .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: white;
-        }
-
-        .header {
-            padding: 12px 16px;
-            border-bottom: 1px solid #e1e5e9;
-            background: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .header h1 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .status-indicator {
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: #e3f2fd;
-            color: #1976d2;
+            height: 100vh;
+            width: 100vw;
+            background: #000;
         }
 
         .plot-container {
-            flex: 1;
+            height: 100vh;
+            width: 100vw;
             position: relative;
         }
 
         #plot {
             width: 100%;
             height: 100%;
-        }
-
-        .control-section {
-            padding: 16px;
-            border-bottom: 1px solid #e1e5e9;
-        }
-
-        .control-section:last-child {
-            border-bottom: none;
-        }
-
-        .section-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 500;
-            color: #666;
-            margin-bottom: 4px;
-        }
-
-        .form-group select,
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 13px;
-            background: white;
-            transition: border-color 0.2s ease;
-        }
-
-        .form-group select:focus,
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #007bff;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        .btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            width: 100%;
-        }
-
-        .btn:hover {
-            background: #0056b3;
-        }
-
-        .btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background: #545b62;
-        }
-
-        .btn-success {
-            background: #28a745;
-        }
-
-        .btn-success:hover {
-            background: #1e7e34;
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-
-        .btn-warning:hover {
-            background: #e0a800;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .stat-item {
-            background: #f8f9fa;
-            padding: 8px;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .stat-label {
-            font-size: 10px;
-            color: #666;
-            margin-bottom: 2px;
-        }
-
-        .stat-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
         }
 
         .no-data-container {
@@ -235,28 +75,6 @@
             line-height: 1.5;
         }
 
-        .suggestion-card {
-            background: #e3f2fd;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border-left: 4px solid #1976d2;
-        }
-
-        .suggestion-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1976d2;
-            margin-bottom: 4px;
-        }
-
-        .suggestion-text {
-            font-size: 12px;
-            color: #424242;
-            margin-bottom: 12px;
-            line-height: 1.4;
-        }
-
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -287,26 +105,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 12px;
-            font-size: 13px;
-            border: 1px solid #f5c6cb;
-        }
-
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 12px;
-            font-size: 13px;
-            border: 1px solid #c3e6cb;
-        }
-
         #plot {
             user-select: none;
             -webkit-user-select: none;
@@ -314,204 +112,139 @@
             -ms-user-select: none;
         }
 
-        .data-tree {
-            max-height: 300px;
-            overflow-y: auto;
-            font-size: 12px;
+        /* Search Bar */
+        .search-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            width: 400px;
+            max-width: 90vw;
         }
 
-        .tree-loading {
-            color: #666;
-            font-style: italic;
-            text-align: center;
-            padding: 10px;
-        }
-
-        .tree-node {
-            margin: 2px 0;
-            padding: 2px 0;
+        .search-wrapper {
             position: relative;
         }
 
-        .tree-toggle {
-            position: absolute;
-            left: 8px;
-            top: 8px;
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: #666;
-            cursor: pointer;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 3px;
-            transition: background-color 0.2s ease;
-            z-index: 1;
-        }
-
-        .tree-toggle:hover {
-            background-color: #e9ecef;
-        }
-
-        .tree-toggle.expanded {
-            transform: translateY(-50%) rotate(0deg);
-        }
-
-        .tree-node-header {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            padding: 2px 4px;
-            border-radius: 3px;
-            transition: background-color 0.2s ease;
-            margin-left: 32px; /* Space for toggle button */
-        }
-
-        .tree-node-header:hover {
-            background-color: #f0f0f0;
-        }
-
-        .tree-node-header.expanded {
-            background-color: #e3f2fd;
-        }
-
-        .tree-icon {
-            width: 14px;
-            height: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-
-        .tree-label {
-            flex: 1;
-            font-weight: 500;
-        }
-
-        .tree-node-content {
-            margin-left: 36px;
-            border-left: 1px solid #e0e0e0;
-            padding-left: 8px;
-        }
-
-        .tree-node-content.collapsed {
-            display: none !important;
-        }
-
-        .tree-item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 1px 4px;
-            margin: 1px 0;
-            border-radius: 2px;
-            font-size: 11px;
-        }
-
-        .tree-item:hover {
-            background-color: #f8f9fa;
-        }
-
-        .tree-item.current {
-            background-color: #e3f2fd;
-            border-left: 2px solid #1976d2;
-        }
-
-        .tree-item-icon {
-            width: 12px;
-            height: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-        }
-
-        .tree-item-label {
-            flex: 1;
-            color: #333;
-        }
-
-        .tree-item-count {
-            color: #666;
-            font-size: 10px;
-            background: #f0f0f0;
-            padding: 1px 4px;
-            border-radius: 2px;
-        }
-
-        .tree-empty {
-            color: #999;
-            font-style: italic;
-            padding: 4px 8px;
-            font-size: 11px;
-        }
-
-        .data-info-box {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 4px;
-            padding: 8px;
-            font-size: 11px;
-        }
-
-        .data-info-loading {
-            color: #999;
-            font-style: italic;
-        }
-
-        .data-info-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-        }
-
-        .data-info-label {
-            color: #666;
-            font-weight: 500;
-        }
-
-        .data-info-value {
-            color: #333;
-        }
-
-        .parameters-container {
-            margin-top: 8px;
-        }
-
-        .parameter-group {
-            margin-bottom: 8px;
-        }
-
-        .parameter-group label {
-            display: block;
-            font-size: 11px;
-            color: #666;
-            margin-bottom: 2px;
-        }
-
-        .parameter-group input,
-        .parameter-group select,
-        .parameter-group textarea {
+        .artist-search-input {
             width: 100%;
-            padding: 4px 6px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            font-size: 11px;
+            padding: 12px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
 
-        .parameter-group textarea {
-            min-height: 60px;
-            resize: vertical;
+        .artist-search-input:focus {
+            outline: none;
+            border-color: #1DB954;
+            background: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
         }
 
-        .parameter-required {
-            color: #d32f2f;
-            font-weight: bold;
+        .artist-search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .close-search-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+            z-index: 1002;
+        }
+
+        .close-search-btn:hover {
+            color: white;
+        }
+
+        .search-toggle {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .search-toggle:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: #1DB954;
+            color: #1DB954;
+            box-shadow: 0 0 20px rgba(29, 185, 84, 0.3);
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            margin-top: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background-color 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background-color: rgba(29, 185, 84, 0.2);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item.selected {
+            background-color: rgba(29, 185, 84, 0.3);
+        }
+
+        .suggestion-artist {
+            font-weight: 600;
+            color: #1DB954;
+        }
+
+        .suggestion-cluster {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 2px;
         }
 
         /* Point Information Panel */
@@ -611,74 +344,133 @@
             cursor: not-allowed;
         }
 
-
-
-        .tree-node-header {
-            cursor: pointer;
-            user-select: none;
+        .title-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            color: #333;
+            font-weight: 500;
         }
-
-        .tree-node-header:hover {
-            background-color: #f0f0f0;
+        
+        .spotify-section {
+            margin-top: 15px;
         }
-
-        .tree-item {
-            cursor: pointer;
+        
+        .spotify-player {
+            margin-top: 10px;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.05);
         }
-
-        .tree-item:hover {
-            background-color: #f0f0f0;
+        
+        .spotify-player iframe {
+            border-radius: 8px;
         }
-
-        .tooltip {
+        
+        .music-container {
             position: relative;
-            display: inline-block;
+            border-radius: 8px;
+            overflow: hidden;
         }
-
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 200px;
-            background-color: #333;
-            color: #fff;
+        
+        .spotify-auth {
+            padding: 20px;
             text-align: center;
-            border-radius: 6px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -100px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 11px;
-            line-height: 1.3;
+            color: #ccc;
+        }
+        
+        .spotify-login-btn {
+            display: inline-block;
+            background-color: #1DB954;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .spotify-login-btn:hover {
+            background-color: #1ed760;
+            text-decoration: none;
+        }
+        
+        .track-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+
+        
+        .spotify-fallback {
+            padding: 20px;
+            text-align: center;
+            color: #ccc;
+        }
+        
+        .spotify-fallback a {
+            color: #1DB954;
+            text-decoration: none;
+        }
+        
+        .spotify-fallback a:hover {
+            text-decoration: underline;
+        }
+        
+        .spotify-search-btn {
+            display: inline-block;
+            background-color: #1DB954;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+        
+        .spotify-search-btn:hover {
+            background-color: #1ed760;
+            text-decoration: none;
+        }
+        
+
+        
+        .loading {
+            padding: 20px;
+            text-align: center;
+            color: #ccc;
+            font-style: italic;
         }
 
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
+        .wikipedia-textarea {
+            width: 100%;
+            min-height: 120px;
+            max-height: 300px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            resize: vertical;
+            background-color: #f8f9fa;
+            color: #333;
         }
 
-        .tree-item.valid-color {
-            cursor: pointer;
+        .wikipedia-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
         }
 
-        .tree-item.valid-color:hover {
-            background-color: #e8f5e8;
-            border-left: 2px solid #4caf50;
-        }
-
-        .tree-item.invalid-color {
-            opacity: 0.6;
-        }
-
-        .tree-item-badge {
-            font-size: 10px;
-            margin-left: 4px;
-        }
-
-        .tree-item.valid-color .tree-item-badge {
-            color: #4caf50;
+        .wikipedia-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
         }
         
         /* Color Scale Editor Styles */
@@ -754,103 +546,36 @@
 </head>
 <body>
     <div class="app-container">
-        <div class="sidebar">
-            <div class="control-section">
-                <div class="section-title">Data Tree</div>
-                <div id="data-tree" class="data-tree">
-                    <div class="tree-loading">Loading tree structure...</div>
-                </div>
-            </div>
-
-            <div class="control-section">
-                <div class="section-title">📊 Current Data Manager</div>
-                <div id="current-data-info" class="data-info-box">
-                    <div class="data-info-loading">Loading...</div>
-                </div>
-            </div>
-            <div class="control-section">
-                <div class="section-title">🔄 Augmentation</div>
-                <div class="form-group">
-                    <label for="augmentation-data-source">Data Source</label>
-                    <select id="augmentation-data-source">
-                        <option value="primary">primary</option>
-                    </select>
-                    <div id="augmentation-data-source-info" class="data-source-info" style="display: none; font-size: 0.8em; color: #666; margin-top: 2px;"></div>
-                </div>
-                <div class="form-group">
-                    <label for="augmentation-method">Method</label>
-                    <select id="augmentation-method" onchange="updateAugmentationParameters()">
-                        <option value="">Select a method...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="augmentation-type">Type</label>
-                    <input type="text" id="augmentation-type" placeholder="tsne_2d">
-                </div>
-                <div id="augmentation-parameters" class="parameters-container">
-                    <!-- Dynamic parameters will be generated here -->
-                </div>
-                <button class="btn btn-success" onclick="createAugmentation()">Create</button>
-            </div>
-
-            <div class="control-section">
-                <div class="section-title">🔍 Index</div>
-                <div class="form-group">
-                    <label for="index-data-source">Data Source</label>
-                    <select id="index-data-source">
-                        <option value="primary">primary</option>
-                    </select>
-                    <div id="index-data-source-info" class="data-source-info" style="display: none; font-size: 0.8em; color: #666; margin-top: 2px;"></div>
-                </div>
-                <div class="form-group">
-                    <label for="index-method">Method</label>
-                    <select id="index-method" onchange="updateIndexParameters()">
-                        <option value="">Select a method...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="index-type">Type</label>
-                    <input type="text" id="index-type" placeholder="clusters">
-                </div>
-                <div id="index-parameters" class="parameters-container">
-                    <!-- Dynamic parameters will be generated here -->
-                </div>
-                <button class="btn btn-warning" onclick="createIndex()">Create</button>
-            </div>
-
-            <div class="control-section">
-                <div class="section-title">📊 Stats</div>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">Points</div>
-                        <div class="stat-value" id="point-count">0</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Size</div>
-                        <div class="stat-value" id="data-size">0 B</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Load Time</div>
-                        <div class="stat-value" id="load-time">0 ms</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-label">Indexes</div>
-                        <div class="stat-value" id="index-count">0</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="main-content">
-            <div class="header">
-                <h1>Data Viewer</h1>
-                <div class="status-indicator" id="status">Loading...</div>
-            </div>
+
             <div class="plot-container">
                 <div id="plot"></div>
             </div>
         </div>
         
+        <!-- Search Bar -->
+        <div id="search-container" class="search-container">
+            <div class="search-wrapper">
+                <input 
+                    type="text" 
+                    id="artist-search" 
+                    class="artist-search-input" 
+                    placeholder="Search for an artist..."
+                    autocomplete="off"
+                />
+                <button id="close-search-btn" class="close-search-btn" onclick="closeSearchBar()">×</button>
+                <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Search Toggle Button (shown when search bar is hidden) -->
+        <div id="search-toggle" class="search-toggle" style="display: none;" onclick="showSearchBar()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+        </div>
+
         <!-- Point Information Panel -->
         <div id="point-info-panel" class="point-info-panel" style="display: none;">
             <div class="point-info-header">
@@ -891,6 +616,9 @@
     <script>
         let plotData = null;
         let colorData = null;
+        let metadata = null;
+        let clusterCentroids = null;
+        let dataBounds = null;
         let startTime = Date.now();
         let currentStatus = null;
         
@@ -900,81 +628,444 @@
         let selectedPointDataManager = null;
         let clickStartPos = null;
 
+        // Global variables
+        let plotDiv;
+        let currentData = null;
+        let clickedPointIndex = null; // Track clicked point
+        let currentZoomLevel = 1; // Track current zoom level
+
+        // Search functionality
+        let searchSuggestions = [];
+        let selectedSuggestionIndex = -1;
+        let searchTimeout = null;
+
         // Initialize the application
         document.addEventListener('DOMContentLoaded', async function() {
             await loadStatus();
+            await loadMetadata();
+            await loadClusterCentroids();
+            await loadDataBounds();
             await loadAndRenderPlot();
-            await buildDataTree();
+            initializeSearch();
         });
+
+        function initializeSearch() {
+            const searchInput = document.getElementById('artist-search');
+            const suggestionsContainer = document.getElementById('search-suggestions');
+
+            if (!searchInput || !suggestionsContainer) return;
+
+            // Input event for search
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value.trim();
+                
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+
+                if (query.length < 2) {
+                    hideSuggestions();
+                    return;
+                }
+
+                // Debounce search
+                searchTimeout = setTimeout(() => {
+                    performSearch(query);
+                }, 200);
+            });
+
+            // Keyboard navigation
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    navigateSuggestions(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateSuggestions(-1);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    selectCurrentSuggestion();
+                } else if (e.key === 'Escape') {
+                    hideSuggestions();
+                }
+            });
+
+            // Click outside to hide suggestions
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                    hideSuggestions();
+                }
+            });
+        }
+
+        function performSearch(query) {
+            if (!metadata) return;
+
+            const results = [];
+            const lowerQuery = query.toLowerCase();
+
+            // Search through metadata
+            metadata.forEach((item, index) => {
+                const title = item.title || item.artist || item.name || '';
+                const lowerTitle = title.toLowerCase();
+
+                if (lowerTitle.includes(lowerQuery)) {
+                    // Calculate relevance score (exact match gets higher score)
+                    let score = 0;
+                    if (lowerTitle.startsWith(lowerQuery)) {
+                        score = 100;
+                    } else if (lowerTitle.includes(lowerQuery)) {
+                        score = 50;
+                    }
+
+                    results.push({
+                        index: index,
+                        title: title,
+                        score: score
+                    });
+                }
+            });
+
+            // Sort by relevance and limit results
+            results.sort((a, b) => b.score - a.score);
+            searchSuggestions = results.slice(0, 10);
+            
+            displaySuggestions();
+        }
+
+        function displaySuggestions() {
+            const suggestionsContainer = document.getElementById('search-suggestions');
+            if (!suggestionsContainer) return;
+
+            if (searchSuggestions.length === 0) {
+                hideSuggestions();
+                return;
+            }
+
+            let html = '';
+            searchSuggestions.forEach((suggestion, index) => {
+                const isSelected = index === selectedSuggestionIndex;
+                html += `
+                    <div class="suggestion-item ${isSelected ? 'selected' : ''}" 
+                         data-index="${suggestion.index}" 
+                         onclick="selectSuggestion(${suggestion.index})">
+                        <div class="suggestion-artist">${suggestion.title}</div>
+                        <div class="suggestion-cluster">Click to zoom to artist</div>
+                    </div>
+                `;
+            });
+
+            suggestionsContainer.innerHTML = html;
+            suggestionsContainer.style.display = 'block';
+        }
+
+        function hideSuggestions() {
+            const suggestionsContainer = document.getElementById('search-suggestions');
+            if (suggestionsContainer) {
+                suggestionsContainer.style.display = 'none';
+            }
+            selectedSuggestionIndex = -1;
+        }
+
+        function navigateSuggestions(direction) {
+            if (searchSuggestions.length === 0) return;
+
+            selectedSuggestionIndex += direction;
+            
+            if (selectedSuggestionIndex >= searchSuggestions.length) {
+                selectedSuggestionIndex = 0;
+            } else if (selectedSuggestionIndex < 0) {
+                selectedSuggestionIndex = searchSuggestions.length - 1;
+            }
+
+            displaySuggestions();
+        }
+
+        function selectCurrentSuggestion() {
+            if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < searchSuggestions.length) {
+                const suggestion = searchSuggestions[selectedSuggestionIndex];
+                selectSuggestion(suggestion.index);
+            }
+        }
+
+        function selectSuggestion(index) {
+            const plotDiv = document.getElementById('plot');
+            if (!plotDiv || !plotDiv.data || !plotDiv.data[0]) {
+                console.warn('Plot data not available');
+                return;
+            }
+
+            const plotData = plotDiv.data[0];
+            
+            // Get the coordinates for this point
+            const x = plotData.x[index];
+            const y = plotData.y[index];
+
+            if (x !== undefined && y !== undefined) {
+                console.log('Selecting point:', { index, x, y });
+                
+                // Clear search input first
+                const searchInput = document.getElementById('artist-search');
+                if (searchInput) {
+                    searchInput.value = '';
+                }
+                hideSuggestions();
+                
+                // Smooth zoom to the point
+                smoothZoomToPoint(x, y);
+                
+                // Update clicked point appearance - make it more prominent
+                clickedPointIndex = index;
+                updateClickedPointAppearance(index);
+                
+                // Show point info
+                const pointData = {
+                    x: x,
+                    y: y,
+                    pointIndex: index,
+                    customdata: [plotData.customdata[index]]
+                };
+                showPointInfo(pointData, index);
+                
+                // Close search bar after selection
+                closeSearchBar();
+            } else {
+                console.warn('Point coordinates not found for index:', index);
+            }
+        }
+
+        function closeSearchBar() {
+            const searchContainer = document.getElementById('search-container');
+            const searchToggle = document.getElementById('search-toggle');
+            
+            if (searchContainer) {
+                searchContainer.style.display = 'none';
+            }
+            
+            if (searchToggle) {
+                searchToggle.style.display = 'flex';
+            }
+            
+            hideSuggestions();
+        }
+
+        function showSearchBar() {
+            const searchContainer = document.getElementById('search-container');
+            const searchToggle = document.getElementById('search-toggle');
+            const searchInput = document.getElementById('artist-search');
+            
+            if (searchContainer) {
+                searchContainer.style.display = 'block';
+            }
+            
+            if (searchToggle) {
+                searchToggle.style.display = 'none';
+            }
+            
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+
+        function smoothZoomToPoint(targetX, targetY) {
+            const plotDiv = document.getElementById('plot');
+            if (!plotDiv || !plotDiv.layout) {
+                console.warn('Plot not available for zooming');
+                return;
+            }
+
+            // Get current view
+            const currentLayout = plotDiv.layout;
+            const currentXRange = currentLayout.xaxis.range;
+            const currentYRange = currentLayout.yaxis.range;
+
+            if (!currentXRange || !currentYRange) {
+                console.warn('Current plot ranges not available');
+                return;
+            }
+
+            // Calculate target view (zoom in around the point)
+            const zoomFactor = 0.05; // Zoom level (smaller = more zoomed in) - increased zoom
+            const xSpan = (currentXRange[1] - currentXRange[0]) * zoomFactor;
+            const ySpan = (currentYRange[1] - currentYRange[0]) * zoomFactor;
+
+            const targetXRange = [targetX - xSpan, targetX + xSpan];
+            const targetYRange = [targetY - ySpan, targetY + ySpan];
+
+            console.log('Zooming to point:', { targetX, targetY, targetXRange, targetYRange });
+
+            // Animate the zoom
+            const steps = 30;
+            const stepDuration = 20; // milliseconds per step
+
+            for (let i = 0; i <= steps; i++) {
+                setTimeout(() => {
+                    const progress = i / steps;
+                    const easeProgress = 1 - Math.pow(1 - progress, 3); // Ease-out cubic
+
+                    const newXRange = [
+                        currentXRange[0] + (targetXRange[0] - currentXRange[0]) * easeProgress,
+                        currentXRange[1] + (targetXRange[1] - currentXRange[1]) * easeProgress
+                    ];
+
+                    const newYRange = [
+                        currentYRange[0] + (targetYRange[0] - currentYRange[0]) * easeProgress,
+                        currentYRange[1] + (targetYRange[1] - currentYRange[1]) * easeProgress
+                    ];
+
+                    Plotly.relayout(plotDiv, {
+                        'xaxis.range': newXRange,
+                        'yaxis.range': newYRange
+                    });
+                }, i * stepDuration);
+            }
+        }
 
         // Load current status
         async function loadStatus() {
             try {
                 const response = await fetch('/api/status');
                 currentStatus = await response.json();
-                
-                // Update data source dropdowns for augmentations and indexes
-                updateDataSourceDropdowns();
-                
-                // Update data manager select (if it exists)
-                const dataManagerSelect = document.getElementById('data-manager-select');
-                if (dataManagerSelect) {
-                    dataManagerSelect.innerHTML = '';
-                    currentStatus.available_augmentations.forEach(dm => {
-                        const option = document.createElement('option');
-                        option.value = dm;
-                        option.textContent = dm;
-                        if (dm === currentStatus.current_data_manager) {
-                            option.selected = true;
-                        }
-                        dataManagerSelect.appendChild(option);
-                    });
-                }
-
-
-
-                // Update augmentation method select
-                const augmentationMethodSelect = document.getElementById('augmentation-method');
-                if (augmentationMethodSelect) {
-                    augmentationMethodSelect.innerHTML = '<option value="">Select a method...</option>';
-                    if (currentStatus.augmentation_methods) {
-                        Object.keys(currentStatus.augmentation_methods).forEach(method => {
-                            const option = document.createElement('option');
-                            option.value = method;
-                            option.textContent = method;
-                            augmentationMethodSelect.appendChild(option);
-                        });
-                    }
-                }
-
-                // Update index method select
-                const indexMethodSelect = document.getElementById('index-method');
-                if (indexMethodSelect) {
-                    indexMethodSelect.innerHTML = '<option value="">Select a method...</option>';
-                    if (currentStatus.index_methods) {
-                        Object.keys(currentStatus.index_methods).forEach(method => {
-                            const option = document.createElement('option');
-                            option.value = method;
-                            option.textContent = method;
-                            indexMethodSelect.appendChild(option);
-                        });
-                    }
-                }
-
-                // Update statistics
-                document.getElementById('index-count').textContent = 
-                    currentStatus.available_indexes ? currentStatus.available_indexes.length : 0;
-                //});
             } catch (error) {
                 console.error('Failed to load status:', error);
-                document.getElementById('status').textContent = '❌ Error';
-                document.getElementById('status').className = 'status-indicator error';
             }
+        }
+
+        // Load metadata
+        async function loadMetadata() {
+            try {
+                console.log('Loading metadata...');
+                const response = await fetch('/api/metadata');
+                const result = await response.json();
+                console.log('Metadata response:', result);
+                metadata = result.metadata || null;
+                console.log('Loaded metadata:', metadata);
+            } catch (error) {
+                console.warn('Failed to load metadata:', error);
+                metadata = null;
+            }
+        }
+
+        // Load cluster centroids
+        async function loadClusterCentroids() {
+            try {
+                console.log('Loading cluster centroids...');
+                const response = await fetch('/api/cluster-centroids');
+                const result = await response.json();
+                console.log('Centroids response:', result);
+                clusterCentroids = result.centroids || null;
+                console.log('Loaded centroids:', clusterCentroids);
+            } catch (error) {
+                console.warn('Failed to load cluster centroids:', error);
+                clusterCentroids = null;
+            }
+        }
+
+        // Load data bounds for zoom constraints
+        async function loadDataBounds() {
+            try {
+                console.log('Loading data bounds...');
+                const response = await fetch('/api/data-bounds');
+                const result = await response.json();
+                console.log('Bounds response:', result);
+                dataBounds = result;
+                console.log('Loaded bounds:', dataBounds);
+            } catch (error) {
+                console.warn('Failed to load data bounds:', error);
+                dataBounds = null;
+            }
+        }
+
+        // Assign earth tone colors to clusters
+        function assignEarthToneColor(clusterId) {
+            // Earth tone color palette
+            const earthTonePalette = [
+                '#8B4513',  // Saddle Brown
+                '#A0522D',  // Sienna
+                '#CD853F',  // Peru
+                '#D2691E',  // Chocolate
+                '#B8860B',  // Dark Goldenrod
+                '#DAA520',  // Goldenrod
+                '#F4A460',  // Sandy Brown
+                '#DEB887',  // Burly Wood
+                '#D2B48C',  // Tan
+                '#BC8F8F',  // Rosy Brown
+                '#8FBC8F',  // Dark Sea Green
+                '#556B2F',  // Dark Olive Green
+                '#6B8E23',  // Olive Drab
+                '#808000',  // Olive
+                '#BDB76B',  // Dark Khaki
+                '#F0E68C',  // Khaki
+                '#9ACD32',  // Yellow Green
+                '#6B4423',  // Dark Brown
+                '#8B7355',  // Dark Tan
+                '#A0522D',  // Sienna
+                '#CD5C5C',  // Indian Red
+                '#B22222',  // Fire Brick
+                '#DC143C',  // Crimson
+                '#8B0000',  // Dark Red
+                '#2F4F4F',  // Dark Slate Gray
+                '#696969',  // Dim Gray
+                '#708090',  // Slate Gray
+                '#778899',  // Light Slate Gray
+                '#4682B4',  // Steel Blue
+                '#5F9EA0',  // Cadet Blue
+                '#20B2AA',  // Light Sea Green
+                '#48D1CC',  // Medium Turquoise
+                '#40E0D0',  // Turquoise
+                '#7FFFD4',  // Aquamarine
+                '#66CDAA',  // Medium Aquamarine
+                '#3CB371',  // Medium Sea Green
+                '#2E8B57',  // Sea Green
+                '#228B22',  // Forest Green
+                '#32CD32',  // Lime Green
+                '#90EE90',  // Light Green
+                '#98FB98',  // Pale Green
+                '#8FBC8F',  // Dark Sea Green
+                '#556B2F',  // Dark Olive Green
+                '#6B8E23',  // Olive Drab
+                '#BDB76B',  // Dark Khaki
+                '#F0E68C',  // Khaki
+                '#EEE8AA',  // Pale Goldenrod
+                '#F5DEB3',  // Wheat
+                '#DEB887',  // Burly Wood
+                '#D2B48C',  // Tan
+                '#BC8F8F',  // Rosy Brown
+                '#F4A460',  // Sandy Brown
+                '#DAA520',  // Goldenrod
+                '#B8860B',  // Dark Goldenrod
+                '#CD853F',  // Peru
+                '#D2691E',  // Chocolate
+                '#A0522D',  // Sienna
+                '#8B4513',  // Saddle Brown
+            ];
+            
+            return earthTonePalette[clusterId % earthTonePalette.length];
+        }
+        
+
+        
+
+
+        // Generate hover template with metadata
+        function generateHoverTemplate(hasColorData) {
+            let template = '<b>Point %{pointNumber}</b><br>';
+            template += 'X: %{x:.4f}<br>';
+            template += 'Y: %{y:.4f}<br>';
+            
+            if (hasColorData) {
+                template += 'Cluster: %{customdata[0]}<br>';
+            }
+            
+            // Show only title on hover if metadata exists
+            template += '%{customdata[1]}';
+            
+            template += '<extra></extra>';
+            return template;
         }
 
         // Load and render the plot
         async function loadAndRenderPlot() {
-            const statusEl = document.getElementById('status');
             const plotEl = document.getElementById('plot');
             startTime = Date.now();
             
@@ -985,7 +1076,6 @@
             }
             
             try {
-                statusEl.textContent = 'Loading...';
                 
                 // Check if current data manager has 2D data
                 if (!currentStatus || !currentStatus.data_info || !currentStatus.data_info.is_2d) {
@@ -1029,67 +1119,107 @@
                 // Load color data
                 colorData = await loadColorData();
                 
-                // Set up default color system when no color data is available
+                // Set up custom color system for HDBSCAN clusters
                 const hasColorData = colorData && colorData.length > 0;
-                const markerColor = hasColorData ? colorData : Array( plotData.x.length ).fill('#1f77b4'); // Default blue color
-                const showColorScale = hasColorData;
+                let markerColor;
+                let showColorScale = false;
+                
+                if (hasColorData) {
+                    // Create custom colors for clusters based on spatial proximity
+                    markerColor = colorData.map(clusterId => {
+                        if (clusterId === -1) {
+                            // Ocean blue for noise points
+                            return '#006994'; // Deep ocean blue
+                        } else {
+                            // Assign earth tone colors
+                            return assignEarthToneColor(clusterId);
+                        }
+                    });
+                    
+                    // Create cluster names for hover display
+                    clusterNames = colorData.map(clusterId => {
+                        if (clusterId === -1) {
+                            return 'Noise';
+                        } else {
+                            return `Cluster ${clusterId}`;
+                        }
+                    });
+                } else {
+                    markerColor = Array(plotData.x.length).fill('#1f77b4'); // Default blue color
+                    clusterNames = Array(plotData.x.length).fill('No Cluster');
+                }
+                
+                // Format metadata for hover display (only title)
+                const formattedMetadata = metadata ? metadata.map(item => {
+                    // Show only title/name field on hover, or first field if no title/name
+                    const titleField = item.title || item.name || item.artist || item.Title || item.Name || item.Artist;
+                    if (titleField) {
+                        return `<br><b>Title:</b> ${titleField}`;
+                    } else {
+                        // If no title field, show the first field
+                        const firstKey = Object.keys(item)[0];
+                        return firstKey ? `<br><b>${firstKey}:</b> ${item[firstKey]}` : '';
+                    }
+                }) : Array(count).fill(''); // Fill with empty strings if no metadata
+
+                // Combine cluster names and metadata for customdata
+                const combinedCustomData = clusterNames.map((clusterName, index) => [
+                    clusterName,
+                    formattedMetadata[index]
+                ]);
                 
                 const trace = {
                     x: x,
                     y: y,
                     mode: 'markers',
-                    type: 'scattergl',
+                    type: 'scattergl', // Use scattergl for performance
                     marker: {
-                        size: 4,
+            size: 12, // Much larger default size
                         color: markerColor,
-                        colorscale: hasColorData ? 'Viridis' : undefined,
-                        showscale: showColorScale,
-                        opacity: 0.7,
-                        line: {
-                            color: 'rgba(255,255,255,0.2)',
-                            width: 0.5
-                        }
-                    },
-                    hovertemplate: '<b>Point %{pointNumber}</b><br>' +
-                                 'X: %{x:.4f}<br>' +
-                                 'Y: %{y:.4f}<br>' +
-                                 (hasColorData ? 'Value: %{marker.color}<br>' : '') +
-                                 '<extra></extra>'
+            opacity: 1.0, // Fully opaque points
+            symbol: 'hexagon'
+            // Removed line property to eliminate borders
+        },
+                    hovertemplate: generateHoverTemplate(hasColorData),
+                    customdata: combinedCustomData
                 };
 
                 const layout = {
-                    title: {
-                        text: currentDataManager,
-                        font: { size: 16, color: '#333' }
-                    },
                     xaxis: {
-                        title: { text: 'X', font: { size: 12 } },
-                        gridcolor: '#f0f0f0',
+                        showgrid: false,
                         zeroline: false,
-                        showgrid: true,
-                        fixedrange: false
+                        showticklabels: false,
+                        fixedrange: false,
+                        minallowed: dataBounds ? dataBounds.x_min : undefined,
+                        maxallowed: dataBounds ? dataBounds.x_max : undefined
                     },
                     yaxis: {
-                        title: { text: 'Y', font: { size: 12 } },
-                        gridcolor: '#f0f0f0',
+                        showgrid: false,
                         zeroline: false,
-                        showgrid: true,
-                        fixedrange: false
+                        showticklabels: false,
+                        fixedrange: false,
+                        minallowed: dataBounds ? dataBounds.y_min : undefined,
+                        maxallowed: dataBounds ? dataBounds.y_max : undefined
                     },
                     hovermode: 'closest',
-                    margin: { l: 50, r: 20, t: 50, b: 50 },
-                    plot_bgcolor: 'white',
-                    paper_bgcolor: 'white',
+                    margin: { l: 0, r: 0, t: 0, b: 0 },
+                    plot_bgcolor: '#000',
+                    paper_bgcolor: '#000',
                     showlegend: false,
                     dragmode: 'pan',
                     selectdirection: false,
-                    coloraxis: showColorScale ? {
-                        colorbar: {
-                            title: 'Value',
-                            thickness: 12,
-                            len: 0.4
-                        }
-                    } : undefined
+                    uirevision: 'true', // Maintain zoom/pan state for better performance
+                    images: dataBounds ? [{
+                        source: '/api/cluster-background',
+                        xref: 'x',
+                        yref: 'y',
+                        x: dataBounds.x_min,
+                        y: dataBounds.y_max,
+                        sizex: dataBounds.x_max - dataBounds.x_min,
+                        sizey: dataBounds.y_max - dataBounds.y_min,
+                        sizing: 'stretch',
+                        layer: 'below'
+                    }] : []
                 };
 
                 const config = {
@@ -1098,10 +1228,21 @@
                     modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d', 'resetScale2d'],
                     displaylogo: false,
                     scrollZoom: true,
-                    editable: false
+                    editable: false,
+                    staticPlot: false,
+                    doubleClick: 'reset',
+                    toImageButtonOptions: {
+                        format: 'png',
+                        filename: 'musical_artists_visualization',
+                        height: 800,
+                        width: 1200,
+                        scale: 1
+                    }
                 };
 
                 await Plotly.newPlot('plot', [trace], layout, config);
+                
+
                 
                 // Store original colors for point selection highlighting
                 const plotDiv = document.getElementById('plot');
@@ -1116,15 +1257,22 @@
                     window.originalOpacity = trace.marker.opacity || 0.7;
                 }
                 
+
+                
                 // Add point selection event handlers
                 
                 // Handle mouse down for point selection
                 plotDiv.on('plotly_click', function(data) {
                     const point = data.points[0];
                     if (point) {
-                        // Safely get the color value, handling cases where marker or color might be undefined
-                        const color = point.marker && point.marker.color !== undefined ? point.marker.color : null;
-                        selectPoint(point.pointIndex, point.x, point.y, color);
+                        // Update clicked point tracking
+                        clickedPointIndex = point.pointIndex;
+                        
+                        // Show point info with YouTube video
+                        showPointInfo(point, point.pointIndex);
+                        
+                        // Update point appearance - make clicked point larger with border
+                        updateClickedPointAppearance(point.pointIndex);
                     }
                 });
                 
@@ -1184,15 +1332,13 @@
                 plotDiv.on('plotly_click', function(data) {
                     // Check if click is on the colorbar
                     if (data.event && data.event.target && data.event.target.className && 
+                        typeof data.event.target.className === 'string' && 
                         data.event.target.className.includes('colorbar')) {
                         openColorScaleEditor();
                     }
                 });
                 
-                const loadTime = Date.now() - startTime;
-                updateInfoPanel(count, buf.byteLength, loadTime);
                 
-                statusEl.textContent = `${count.toLocaleString()} points`;
                 
             } catch (error) {
                 console.error('Plot loading error:', error);
@@ -1203,18 +1349,6 @@
         // Show helpful message when no 2D data is available
         function showNoDataMessage() {
             const plotEl = document.getElementById('plot');
-            const statusEl = document.getElementById('status');
-            
-            statusEl.textContent = 'No 2D data';
-            
-            // Get detailed dataset information
-            let dataInfo = {};
-            let availableAugmentations = [];
-            
-            if (currentStatus && currentStatus.data_info) {
-                dataInfo = currentStatus.data_info;
-                availableAugmentations = currentStatus.available_augmentations || [];
-            }
             
             plotEl.innerHTML = `
                 <div class="no-data-container">
@@ -1223,36 +1357,8 @@
                     <div class="no-data-description">
                         The current data manager doesn't have 2-dimensional data for visualization.
                     </div>
-                    
-                    ${availableAugmentations.length > 1 ? `
-                        <div class="suggestion-card">
-                            <div class="suggestion-title">Switch to 2D Data Manager</div>
-                            <div class="suggestion-text">
-                                You have ${availableAugmentations.length} data managers available. Switch to one with 2D data.
-                            </div>
-                            <select id="switch-data-manager-select" class="form-control" onchange="switchToSelectedDataManager()">
-                                <option value="">Select a data manager...</option>
-                                ${availableAugmentations.filter(dm => dm !== 'primary').map(dm => 
-                                    `<option value="${dm}">${dm}</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="suggestion-card">
-                        <div class="suggestion-title">Create a 2D Visualization</div>
-                        <div class="suggestion-text">
-                            Create a 2D augmentation using t-SNE or UMAP to reduce your high-dimensional data to 2D.
-                        </div>
-                        <button class="btn btn-success" onclick="createTSNEAugmentation()">
-                            Create t-SNE
-                        </button>
-                    </div>
                 </div>
             `;
-            
-            // Update info panel with available data
-            updateInfoPanel(0, 0, 0);
         }
 
         // Load color data for visualization
@@ -1276,20 +1382,6 @@
             }
         }
 
-        function updateInfoPanel(count, dataSize, loadTime) {
-            document.getElementById('point-count').textContent = count.toLocaleString();
-            document.getElementById('data-size').textContent = formatBytes(dataSize);
-            document.getElementById('load-time').textContent = loadTime;
-        }
-
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-        }
-
         // Point selection functions
         function selectPoint(index, x, y, color) {
             selectedPointIndex = index;
@@ -1298,50 +1390,9 @@
             
             showPointInfo(index, x, y, color);
             highlightSelectedPoint(index);
-            
-            // Update parameter dropdowns to include the selected point
-            updateParameterDropdowns();
         }
 
-        function showPointInfo(index, x, y, color) {
-            const panel = document.getElementById('point-info-panel');
-            const content = document.getElementById('point-info-content');
-            
-            let html = `
-                <div class="point-info-item">
-                    <div class="point-info-label">Index</div>
-                    <div class="point-info-value">${index}</div>
-                </div>
-                <div class="point-info-item">
-                    <div class="point-info-label">Coordinates</div>
-                    <div class="point-info-value">(${x.toFixed(4)}, ${y.toFixed(4)})</div>
-                </div>
-            `;
-            
-            if (color !== undefined && color !== null) {
-                html += `
-                    <div class="point-info-item">
-                        <div class="point-info-label">Color Value</div>
-                        <div class="point-info-value">${color}</div>
-                    </div>
-                `;
-            }
-            
-            html += `
-                <div class="point-info-item">
-                    <div class="point-info-label">Data Manager</div>
-                    <div class="point-info-value">${selectedPointDataManager}</div>
-                </div>
-                <div class="point-actions">
-                    <button class="point-action-btn" onclick="copyPointIndex()">
-                        Copy Index
-                    </button>
-                </div>
-            `;
-            
-            content.innerHTML = html;
-            panel.style.display = 'block';
-        }
+
 
         function closePointInfo() {
             document.getElementById('point-info-panel').style.display = 'none';
@@ -1351,9 +1402,6 @@
             selectedPoint = null;
             selectedPointIndex = null;
             selectedPointDataManager = null;
-            
-            // Update parameter dropdowns to remove point options
-            updateParameterDropdowns();
         }
 
         function highlightSelectedPoint(index) {
@@ -1410,8 +1458,6 @@
                 }
             }
         }
-
-
 
         function copyPointIndex() {
             navigator.clipboard.writeText(selectedPointIndex.toString()).then(() => {
@@ -1814,42 +1860,315 @@
             window.originalColors = [...newColors];
         }
 
-        function updateParameterDropdowns() {
-            // Update all matrix parameter dropdowns to include the selected point
-            const matrixDropdowns = document.querySelectorAll('select[id*="param-"][id*="matrix"]');
-            
-            matrixDropdowns.forEach(async (dropdown) => {
-                // Get the parameter info from the dropdown ID
-                const idParts = dropdown.id.split('-');
-                const methodType = idParts[0]; // 'augmentation' or 'index'
-                const paramName = idParts.slice(2).join('-'); // Get the full parameter name
-                
-                // Find the parameter definition
-                let paramDef = null;
-                if (methodType === 'augmentation' && currentStatus.augmentation_methods) {
-                    const methodSelect = document.getElementById('augmentation-method');
-                    if (methodSelect && methodSelect.value) {
-                        const method = currentStatus.augmentation_methods[methodSelect.value];
-                        if (method && method.parameters) {
-                            paramDef = method.parameters[paramName];
-                        }
-                    }
-                } else if (methodType === 'index' && currentStatus.index_methods) {
-                    const methodSelect = document.getElementById('index-method');
-                    if (methodSelect && methodSelect.value) {
-                        const method = currentStatus.index_methods[methodSelect.value];
-                        if (method && method.parameters) {
-                            paramDef = method.parameters[paramName];
-                        }
-                    }
+        // Spotify Web Playback SDK integration
+        let spotifyPlayer = null;
+        let deviceId = null;
+
+        // Initialize Spotify Web Playback SDK
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            const token = getSpotifyToken();
+            if (token) {
+                initializeSpotifyPlayer(token);
+            }
+        };
+
+        function getSpotifyToken() {
+            // Get token from cookies (set by backend)
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'spotify_access_token') {
+                    return value;
                 }
-                
-                if (paramDef && paramDef.type && paramDef.type.includes('matrix')) {
-                    // Recreate the dropdown with the selected point
-                    const newSelect = await createParameterInput(paramName, paramDef, methodType);
-                    dropdown.parentNode.replaceChild(newSelect, dropdown);
-                }
+            }
+            return null;
+        }
+
+        function initializeSpotifyPlayer(token) {
+            spotifyPlayer = new Spotify.Player({
+                name: 'Music Visualization Player',
+                getOAuthToken: cb => { cb(token); }
             });
+
+            // Error handling
+            spotifyPlayer.addListener('initialization_error', ({ message }) => {
+                console.error('Failed to initialize Spotify player:', message);
+            });
+
+            spotifyPlayer.addListener('authentication_error', ({ message }) => {
+                console.error('Failed to authenticate Spotify player:', message);
+                // Redirect to login if token is invalid
+                window.location.href = '/login';
+            });
+
+            spotifyPlayer.addListener('account_error', ({ message }) => {
+                console.error('Failed to validate Spotify account:', message);
+            });
+
+            spotifyPlayer.addListener('playback_error', ({ message }) => {
+                console.error('Failed to perform playback:', message);
+            });
+
+            // Playback status updates
+            spotifyPlayer.addListener('player_state_changed', state => {
+                console.log('Playback state changed:', state);
+            });
+
+            // Ready
+            spotifyPlayer.addListener('ready', ({ device_id }) => {
+                console.log('Ready with Device ID', device_id);
+                deviceId = device_id;
+            });
+
+            // Not Ready
+            spotifyPlayer.addListener('not_ready', ({ device_id }) => {
+                console.log('Device ID has gone offline', device_id);
+            });
+
+            // Connect to the player
+            spotifyPlayer.connect();
+        }
+
+        // Function to play track directly using Spotify API
+        async function playTrackDirectly(trackId) {
+            if (!deviceId) {
+                console.log('No Spotify device available');
+                return false;
+            }
+
+            try {
+                const token = getSpotifyToken();
+                const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        uris: [`spotify:track:${trackId}`]
+                    })
+                });
+
+                if (response.ok) {
+                    console.log('Track started playing directly');
+                    return true;
+                } else {
+                    console.error('Failed to play track directly:', response.status);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error playing track directly:', error);
+                return false;
+            }
+        }
+
+        // Function to play track with autoplay in iframe
+        function playTrackInIframe(trackId, iframeElement) {
+            // Method 1: Try to trigger autoplay by refreshing iframe with autoplay parameter
+            const currentSrc = iframeElement.src;
+            const autoplaySrc = currentSrc.includes('?') 
+                ? `${currentSrc}&autoplay=1` 
+                : `${currentSrc}?autoplay=1`;
+            
+            iframeElement.src = autoplaySrc;
+            
+            // Method 2: Try to focus and simulate click on iframe
+            setTimeout(() => {
+                iframeElement.focus();
+                // Note: This won't work due to cross-origin restrictions, but worth trying
+            }, 1000);
+        }
+
+        // Enhanced function to search for Spotify music with autoplay options
+        async function searchSpotifyMusic(artistName) {
+            try {
+                const response = await fetch(`/api/spotify-search?artist=${encodeURIComponent(artistName)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error('Spotify search error:', data.error);
+                    return data; // Return the error data to handle authentication
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('Error searching Spotify:', error);
+                return null;
+            }
+        }
+
+
+
+        // Function to show point info with YouTube video
+        function showPointInfo(pointData, pointIndex) {
+            const infoContainer = document.getElementById('point-info-panel');
+            const contentDiv = document.getElementById('point-info-content');
+            if (!infoContainer || !contentDiv) return;
+
+            // Get metadata for this point
+            const pointMetadata = metadata[pointIndex];
+            if (!pointMetadata) return;
+
+            // Update the header title
+            const headerTitle = infoContainer.querySelector('.point-info-header h3');
+            if (headerTitle) {
+                headerTitle.textContent = pointMetadata.title || 'Unknown Title';
+            }
+
+            // Create basic info HTML for the content area
+            let infoHTML = `
+                <div class="info-content">
+                    <div class="point-info-item">
+                        <div class="point-info-label">Cluster</div>
+                        <div class="point-info-value">${pointData.customdata[0]}</div>
+                    </div>
+                    
+                    <div class="point-info-item">
+                        <div class="point-info-label">Title</div>
+                        <div class="point-info-value">
+                            <input type="text" class="title-input" value="${pointMetadata.title || 'Unknown Title'}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="point-info-item">
+                        <div class="point-info-label">
+                            <a href="${pointMetadata.url || '#'}" target="_blank" class="wikipedia-link">Wikipedia</a>
+                        </div>
+                        <div class="point-info-value">
+                            <textarea class="wikipedia-textarea" readonly>${pointMetadata.text || 'No description available.'}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="spotify-section">
+                        <h4>Music</h4>
+                        <div id="spotifyPlayer" class="spotify-player">
+                            <div class="loading">Searching for music...</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            contentDiv.innerHTML = infoHTML;
+            infoContainer.style.display = 'block';
+
+            // Search for Spotify music
+            const artistName = pointMetadata.title || pointMetadata.artist || 'Unknown Artist';
+            searchSpotifyMusic(artistName).then(spotifyData => {
+                const spotifyPlayer = document.getElementById('spotifyPlayer');
+                
+                if (spotifyData && spotifyData.needs_auth) {
+                    // User needs to authenticate with Spotify
+                    spotifyPlayer.innerHTML = `
+                        <div class="spotify-auth">
+                            <p>Connect your Spotify account to listen to music</p>
+                            <a href="${spotifyData.login_url}" class="spotify-login-btn">
+                                Connect Spotify Account
+                            </a>
+                        </div>
+                    `;
+                } else if (spotifyData && spotifyData.found && spotifyData.embed_url) {
+                    // If we have music, embed it with autoplay options
+                    spotifyPlayer.innerHTML = `
+                        <div class="music-container">
+                            <iframe 
+                                id="spotifyIframe"
+                                width="100%" 
+                                height="352" 
+                                src="${spotifyData.embed_url}"
+                                frameborder="0" 
+                                allowfullscreen=""
+                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture; loading=lazy">
+                            </iframe>
+                        </div>
+                        <div class="track-info">
+                            <p><strong>${spotifyData.track_name}</strong> - ${spotifyData.album_name}</p>
+                        </div>
+                    `;
+                    
+                    // Try to autoplay after a short delay
+                    setTimeout(() => {
+                        // First try direct playback
+                        playTrackDirectly(spotifyData.track_id).then(success => {
+                            if (!success) {
+                                // If direct playback fails, try iframe autoplay
+                                playTrackInIframe(spotifyData.track_id, document.getElementById('spotifyIframe'));
+                            }
+                        });
+                    }, 500);
+                } else {
+                    // Show search link with better message
+                    const message = spotifyData?.message || `No music found for ${artistName}`;
+                    spotifyPlayer.innerHTML = `
+                        <div class="spotify-fallback">
+                            <p>${message}</p>
+                            <a href="${spotifyData?.search_url || `https://open.spotify.com/search/${encodeURIComponent(artistName)}`}" target="_blank" class="spotify-search-btn">
+                                Search Spotify
+                            </a>
+                        </div>
+                    `;
+                }
+            }).catch(error => {
+                const spotifyPlayer = document.getElementById('spotifyPlayer');
+                spotifyPlayer.innerHTML = `
+                    <div class="spotify-fallback">
+                        <p>Error loading music for ${artistName}.</p>
+                        <a href="https://open.spotify.com/search/${encodeURIComponent(artistName)}" target="_blank" class="spotify-search-btn">
+                            Search Spotify
+                        </a>
+                    </div>
+                `;
+            });
+        }
+
+
+
+        // Function to update clicked point appearance
+        function updateClickedPointAppearance(clickedIndex) {
+            const plotDiv = document.getElementById('plot');
+            if (!plotDiv || !plotDiv.data || !plotDiv.data[0]) {
+                console.warn('Plot data not available for updating appearance');
+                return;
+            }
+            
+            const plotData = plotDiv.data[0];
+            console.log('Updating point appearance for index:', clickedIndex);
+            console.log('Plot data structure:', plotData);
+            
+            // Handle different data structures
+            let currentSizes = plotData.marker.size;
+            let currentColors = plotData.marker.color;
+            
+            // If sizes/colors are single values, convert to arrays
+            if (!Array.isArray(currentSizes)) {
+                currentSizes = new Array(plotData.x.length).fill(currentSizes || 12);
+            }
+            if (!Array.isArray(currentColors)) {
+                currentColors = new Array(plotData.x.length).fill(currentColors || '#1f77b4');
+            }
+            
+            // Create new arrays
+            const newSizes = [...currentSizes];
+            const newColors = [...currentColors];
+            const newLineWidths = new Array(newSizes.length).fill(0); // Default no border
+            const newLineColors = new Array(newSizes.length).fill('#000000'); // Default black border
+            
+            // Make clicked point slightly larger with transparent border
+            if (clickedIndex !== null && clickedIndex < newSizes.length) {
+                const baseSize = newSizes[clickedIndex];
+                newSizes[clickedIndex] = baseSize * 1.3; // Make it only 1.3x larger (more subtle)
+                newLineWidths[clickedIndex] = 3; // Border width
+                newLineColors[clickedIndex] = 'rgba(255, 255, 255, 0.7)'; // Semi-transparent white border
+                console.log('Updated point', clickedIndex, 'size from', baseSize, 'to', newSizes[clickedIndex]);
+            }
+            
+            // Update the plot
+            Plotly.restyle(plotDiv, {
+                'marker.size': [newSizes],
+                'marker.line.width': [newLineWidths],
+                'marker.line.color': [newLineColors]
+            });
+            
+            console.log('Plot restyle completed');
         }
 
         // Helper functions for showing messages
@@ -1899,1124 +2218,6 @@
             setTimeout(() => {
                 messageDiv.remove();
             }, 3000);
-        }
-
-        // Update data source dropdowns
-        function updateDataSourceDropdowns() {
-            if (!currentStatus || !currentStatus.available_augmentations) return;
-            
-            // Update augmentation data source dropdown
-            const augDataSourceSelect = document.getElementById('augmentation-data-source');
-            if (augDataSourceSelect) {
-                augDataSourceSelect.innerHTML = '';
-                currentStatus.available_augmentations.forEach(dm => {
-                    const option = document.createElement('option');
-                    option.value = dm;
-                    const shape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[dm];
-                    if (shape) {
-                        option.textContent = `${dm} (${shape.join('×')})`;
-                    } else {
-                        option.textContent = dm;
-                    }
-                    augDataSourceSelect.appendChild(option);
-                });
-                // Add change listener to update parameter dropdowns when data source changes
-                augDataSourceSelect.addEventListener('change', function() {
-                    resetMatrixParameterDropdowns('augmentation');
-                    updateParameterDropdowns();
-                    updateDataSourceInfo();
-                });
-            }
-            
-            // Update index data source dropdown
-            const indexDataSourceSelect = document.getElementById('index-data-source');
-            if (indexDataSourceSelect) {
-                indexDataSourceSelect.innerHTML = '';
-                currentStatus.available_augmentations.forEach(dm => {
-                    const option = document.createElement('option');
-                    option.value = dm;
-                    const shape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[dm];
-                    if (shape) {
-                        option.textContent = `${dm} (${shape.join('×')})`;
-                    } else {
-                        option.textContent = dm;
-                    }
-                    indexDataSourceSelect.appendChild(option);
-                });
-                // Add change listener to update parameter dropdowns when data source changes
-                indexDataSourceSelect.addEventListener('change', function() {
-                    resetMatrixParameterDropdowns('index');
-                    updateParameterDropdowns();
-                    updateDataSourceInfo();
-                });
-            }
-            
-            // Update data source info display
-            updateDataSourceInfo();
-        }
-        
-        // Update data source info display
-        function updateDataSourceInfo() {
-            // Update augmentation data source info
-            const augDataSourceSelect = document.getElementById('augmentation-data-source');
-            const augDataSourceInfo = document.getElementById('augmentation-data-source-info');
-            if (augDataSourceSelect && augDataSourceInfo) {
-                const selectedSource = augDataSourceSelect.value;
-                const shape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[selectedSource];
-                if (shape) {
-                    augDataSourceInfo.textContent = `Shape: ${shape.join(' × ')}`;
-                    augDataSourceInfo.style.display = 'block';
-                } else {
-                    augDataSourceInfo.style.display = 'none';
-                }
-            }
-            
-            // Update index data source info
-            const indexDataSourceSelect = document.getElementById('index-data-source');
-            const indexDataSourceInfo = document.getElementById('index-data-source-info');
-            if (indexDataSourceSelect && indexDataSourceInfo) {
-                const selectedSource = indexDataSourceSelect.value;
-                const shape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[selectedSource];
-                if (shape) {
-                    indexDataSourceInfo.textContent = `Shape: ${shape.join(' × ')}`;
-                    indexDataSourceInfo.style.display = 'block';
-                } else {
-                    indexDataSourceInfo.style.display = 'none';
-                }
-            }
-        }
-        
-        // Reset matrix parameter dropdowns when data source changes
-        function resetMatrixParameterDropdowns(methodType) {
-            const paramsContainer = document.getElementById(`${methodType}-parameters`);
-            if (!paramsContainer) return;
-            
-            // Find all matrix parameter dropdowns and reset them
-            const matrixDropdowns = paramsContainer.querySelectorAll('select[id*="param-"][id*="matrix"]');
-            matrixDropdowns.forEach(dropdown => {
-                dropdown.value = ''; // Reset to empty selection
-            });
-        }
-
-        // Dynamic parameter generation functions
-        async function updateAugmentationParameters() {
-            const methodSelect = document.getElementById('augmentation-method');
-            const paramsContainer = document.getElementById('augmentation-parameters');
-            
-            if (!methodSelect || !paramsContainer || !currentStatus) return;
-            
-            const selectedMethod = methodSelect.value;
-            if (!selectedMethod) {
-                paramsContainer.innerHTML = '';
-                return;
-            }
-            
-            const methodDef = currentStatus.augmentation_methods[selectedMethod];
-            if (!methodDef || !methodDef.parameters) {
-                paramsContainer.innerHTML = '<div class="parameter-group">No parameters required</div>';
-                return;
-            }
-            
-            await generateParameterInputs(paramsContainer, methodDef.parameters, 'augmentation');
-            // Update parameter dropdowns when method changes
-            updateParameterDropdowns();
-        }
-
-        async function updateIndexParameters() {
-            const methodSelect = document.getElementById('index-method');
-            const paramsContainer = document.getElementById('index-parameters');
-            
-            if (!methodSelect || !paramsContainer || !currentStatus) return;
-            
-            const selectedMethod = methodSelect.value;
-            if (!selectedMethod) {
-                paramsContainer.innerHTML = '';
-                return;
-            }
-            
-            const methodDef = currentStatus.index_methods[selectedMethod];
-            if (!methodDef || !methodDef.parameters) {
-                paramsContainer.innerHTML = '<div class="parameter-group">No parameters required</div>';
-                return;
-            }
-            
-            await generateParameterInputs(paramsContainer, methodDef.parameters, 'index');
-            // Update parameter dropdowns when method changes
-            updateParameterDropdowns();
-        }
-
-        async function generateParameterInputs(container, parameters, methodType) {
-            container.innerHTML = '';
-            
-            for (const [paramName, paramDef] of Object.entries(parameters)) {
-                const paramGroup = document.createElement('div');
-                paramGroup.className = 'parameter-group';
-                
-                const label = document.createElement('label');
-                label.htmlFor = `${methodType}-param-${paramName}`;
-                label.innerHTML = `${paramName}${paramDef.required ? '<span class="parameter-required">*</span>' : ''}`;
-                
-                const input = await createParameterInput(paramName, paramDef, methodType);
-                
-                paramGroup.appendChild(label);
-                paramGroup.appendChild(input);
-                container.appendChild(paramGroup);
-            }
-        }
-
-        async function createParameterInput(paramName, paramDef, methodType) {
-            const inputId = `${methodType}-param-${paramName}`;
-            
-            if (paramDef.type === 'kwargs') {
-                const textarea = document.createElement('textarea');
-                textarea.id = inputId;
-                textarea.placeholder = '{"key": "value"}';
-                textarea.className = 'form-control';
-                return textarea;
-            } else if (typeof paramDef.type === 'string' && paramDef.type.includes('matrix')) {
-                // Matrix parameter - create dropdown for augmentations with shape validation
-                const select = document.createElement('select');
-                select.id = inputId;
-                select.className = 'form-control';
-                
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Loading compatible data managers...';
-                select.appendChild(defaultOption);
-                
-                // Load compatible data managers asynchronously
-                if (currentStatus && currentStatus.available_augmentations) {
-                    try {
-                        const compatibleDMs = await getCompatibleDataManagers(paramDef.type, methodType);
-                        
-                        // Clear loading message
-                        select.innerHTML = '';
-                        
-                        const newDefaultOption = document.createElement('option');
-                        newDefaultOption.value = '';
-                        newDefaultOption.textContent = 'Select an augmentation...';
-                        select.appendChild(newDefaultOption);
-                        
-                        // Add point selection options from any compatible data manager
-                        if (selectedPoint && selectedPointIndex !== null) {
-                            const pointDMs = await getCompatiblePointSources(paramDef.type, methodType);
-                                // Group label (disabled)
-                            const header = document.createElement('option');
-                            header.disabled = true;
-                            header.textContent = '— Selected point —';
-                            select.appendChild(header);
-
-                            // Get all data managers to show point options for all of them
-                            const allDMs = currentStatus.available_augmentations || [];
-                            allDMs.forEach(dmName => {
-                                const option = document.createElement('option');
-                                option.value = `point:${selectedPointIndex}:${dmName}`;
-                                
-                                // Get the shape of this data manager to show point size
-                                const dmShape = currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[dmName];
-                                if (dmShape && dmShape.length >= 2) {
-                                    const pointSize = dmShape[1]; // Number of features in the point
-                                    option.textContent = `📍 Point ${selectedPointIndex} from ${dmName} (${pointSize} features)`;
-                                } else {
-                                    option.textContent = `📍 Point ${selectedPointIndex} from ${dmName}`;
-                                }
-                                option.style.fontWeight = 'bold';
-                                
-                                // Check if this data manager is compatible for point selection
-                                const isCompatible = pointDMs.includes(dmName);
-                                if (isCompatible) {
-                                    option.style.color = '#007bff';
-                                } else {
-                                    option.disabled = true;
-                                    option.style.color = '#999';
-                                    option.textContent += ' (incompatible)';
-                                }
-                                select.appendChild(option);
-                            });
-
-                            // Add separator
-                            const separator = document.createElement('option');
-                            separator.disabled = true;
-                            separator.textContent = '──────────';
-                            select.appendChild(separator);
-                        }
-                        
-                        compatibleDMs.forEach(dm => {
-                            const option = document.createElement('option');
-                            option.value = dm.name;
-                            if (dm.shape) {
-                                option.textContent = `${dm.name} (${dm.shape.join('×')})`;
-                            } else {
-                                option.textContent = `${dm.name} (unknown shape)`;
-                            }
-                            if (!dm.compatible) {
-                                option.disabled = true;
-                                option.style.color = '#999';
-                                option.textContent += ' (incompatible)';
-                            }
-                            select.appendChild(option);
-                        });
-                    } catch (error) {
-                        console.error('Failed to load compatible data managers:', error);
-                        select.innerHTML = '<option value="">Error loading options</option>';
-                    }
-                }
-                
-                return select;
-            } else if (paramDef.type === 'int') {
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.id = inputId;
-                input.className = 'form-control';
-                input.placeholder = 'Enter integer value';
-                return input;
-            } else if (paramDef.type === 'float') {
-                const input = document.createElement('input');
-                input.type = 'number';
-                input.step = 'any';
-                input.id = inputId;
-                input.className = 'form-control';
-                input.placeholder = 'Enter float value';
-                return input;
-            } else if (paramDef.type === 'string') {
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.id = inputId;
-                input.className = 'form-control';
-                input.placeholder = 'Enter string value';
-                return input;
-            } else {
-                // Default to text input
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.id = inputId;
-                input.className = 'form-control';
-                input.placeholder = `Enter ${paramName}`;
-                return input;
-            }
-        }
-
-        async function getCompatibleDataManagers(matrixType, methodType) {
-            const compatibleDMs = [];
-            
-            // Get the selected data source's shape for compatibility checking
-            const dataSourceSelect = document.getElementById(`${methodType}-data-source`);
-            const selectedDataSource = dataSourceSelect ? dataSourceSelect.value : 'primary';
-            
-            // Get the selected data source's shape
-            let selectedShape = null;
-            if (selectedDataSource === 'primary') {
-                // For primary, get shape from data_manager_shapes if available, otherwise from data_info
-                if (currentStatus?.data_manager_shapes?.primary) {
-                    selectedShape = currentStatus.data_manager_shapes.primary;
-                } else if (currentStatus?.data_info?.shape) {
-                    selectedShape = currentStatus.data_info.shape;
-                }
-            } else {
-                // For other data managers, get shape from data_manager_shapes
-                if (currentStatus?.data_manager_shapes?.[selectedDataSource]) {
-                    selectedShape = currentStatus.data_manager_shapes[selectedDataSource];
-                } else {
-                    try {
-                        selectedShape = await getDataManagerShape(selectedDataSource);
-                    } catch (error) {
-                        console.warn(`Failed to get shape for ${selectedDataSource}:`, error);
-                    }
-                }
-            }
-            
-            if (!selectedShape || selectedShape.length < 2) {
-                // If we don't have current shape info, return all data managers
-                if (currentStatus && currentStatus.available_augmentations) {
-                    return currentStatus.available_augmentations.map(dm => ({ 
-                        name: dm, 
-                        shape: [0, 0],
-                        compatible: false 
-                    }));
-                }
-                return [];
-            }
-            
-            const n = selectedShape[0]; // Number of data points
-            const m = selectedShape[1]; // Size of each data point
-            
-            // Parse matrix type to extract shape constraints
-            const shapeConstraints = parseMatrixType(matrixType);
-            
-            if (currentStatus && currentStatus.available_augmentations) {
-                // Process data managers sequentially to avoid overwhelming the server
-                for (const dmName of currentStatus.available_augmentations) {
-                    try {
-                        // Get shape info for this data manager
-                        const dmShape = await getDataManagerShape(dmName);
-                        const compatible = dmShape && isShapeCompatible(dmShape, shapeConstraints, n, m);
-                        compatibleDMs.push({ 
-                            name: dmName, 
-                            shape: dmShape || [0, 0],
-                            compatible: compatible
-                        });
-                    } catch (error) {
-                        console.warn(`Failed to get shape for ${dmName}:`, error);
-                        compatibleDMs.push({ 
-                            name: dmName, 
-                            shape: [0, 0],
-                            compatible: false 
-                        });
-                    }
-                }
-            }
-            
-            return compatibleDMs;
-        }
-
-        // Compute which data managers can provide the selected point for a given matrix type
-        async function getCompatiblePointSources(matrixType, methodType) {
-            const pointDMs = [];
-            if (!currentStatus || !currentStatus.available_augmentations) return pointDMs;
-
-            // Get the selected data source's shape for compatibility checking
-                        const dataSourceSelect = document.getElementById(`${methodType}-data-source`);
-            const selectedDataSource = dataSourceSelect ? dataSourceSelect.value : 'primary';
-            
-            // Get the selected data source's shape
-            let selectedShape = null;
-            if (selectedDataSource === 'primary') {
-                // For primary, get shape from data_manager_shapes if available, otherwise from data_info
-                if (currentStatus?.data_manager_shapes?.primary) {
-                    selectedShape = currentStatus.data_manager_shapes.primary;
-                } else if (currentStatus?.data_info?.shape) {
-                    selectedShape = currentStatus.data_info.shape;
-                }
-            } else {
-                // For other data managers, get shape from data_manager_shapes
-                if (currentStatus?.data_manager_shapes?.[selectedDataSource]) {
-                    selectedShape = currentStatus.data_manager_shapes[selectedDataSource];
-                } else {
-                    try {
-                        selectedShape = await getDataManagerShape(selectedDataSource);
-                    } catch (error) {
-                        console.warn(`Failed to get shape for ${selectedDataSource}:`, error);
-                    }
-                }
-            }
-            
-            if (!selectedShape || selectedShape.length < 2) return pointDMs;
-            const n = selectedShape[0];
-            const m = selectedShape[1];
-
-            // Only allow point options for vector-like parameters
-            // Allow if matrixType contains a single free dimension with m anywhere, or a 1×m / m×1 style
-            const constraints = parseMatrixType(matrixType);
-            if (!constraints) return pointDMs;
-
-            // We consider a point compatible if its feature dimension matches m (for rows or columns)
-            const requiresM = constraints.includes('m');
-            if (!requiresM) return pointDMs;
-
-            for (const dmName of currentStatus.available_augmentations) {
-                try {
-                    const dmShape = await getDataManagerShape(dmName);
-                    if (!dmShape || dmShape.length < 2) continue;
-                    const dmN = dmShape[0];
-                    const dmM = dmShape[1];
-                    // Must have same number of points and same feature size to take the i-th point
-                    if (dmN === n && dmM === m) {
-                        pointDMs.push(dmName);
-                    }
-                    
-                } catch (e) {
-                    // ignore
-                }
-            }
-
-            return pointDMs;
-        }
-
-        function parseMatrixType(matrixType) {
-            // Parse matrix type like "(n, i)matrix" or "(i, m)matrix"
-            const match = matrixType.match(/\(([^)]+)\)matrix/);
-            if (!match) return null;
-            
-            const dimensions = match[1].split(',').map(d => d.trim());
-            return dimensions;
-        }
-
-        async function getDataManagerShape(dmName) {
-            // Get shape info for a specific data manager from the status data
-            if (currentStatus && currentStatus.data_manager_shapes && currentStatus.data_manager_shapes[dmName]) {
-                return currentStatus.data_manager_shapes[dmName];
-            }
-            
-            // Fallback to API call if not in status data
-            try {
-                const response = await fetch(`/api/dataset-info?data_manager=${dmName}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.shape && data.shape.length >= 2) {
-                        return data.shape;
-                    }
-                }
-            } catch (error) {
-                console.warn(`Failed to get shape for ${dmName}:`, error);
-            }
-            
-            // If we can't get the shape, return null
-            return null;
-        }
-
-        function isShapeCompatible(dmShape, constraints, n, m) {
-            if (!constraints || constraints.length !== dmShape.length) {
-                return false;
-            }
-            
-            for (let i = 0; i < constraints.length; i++) {
-                const constraint = constraints[i];
-                const actualSize = dmShape[i];
-                
-                if (constraint === 'n') {
-                    if (actualSize !== n) return false;
-                } else if (constraint === 'm') {
-                    if (actualSize !== m) return false;
-                } else if (constraint === 'i' || constraint === 'j') {
-                    // i and j are free variables - any size is acceptable
-                    continue;
-                } else {
-                    // If it's a number, it must match exactly
-                    const expectedSize = parseInt(constraint);
-                    if (!isNaN(expectedSize) && actualSize !== expectedSize) {
-                        return false;
-                    }
-                }
-            }
-            
-            return true;
-        }
-
-        function collectParameters(methodType, methodName) {
-            const parameters = {};
-            const methodDef = methodType === 'augmentation' 
-                ? currentStatus.augmentation_methods[methodName]
-                : currentStatus.index_methods[methodName];
-            
-            if (!methodDef || !methodDef.parameters) {
-                return parameters;
-            }
-            
-            Object.entries(methodDef.parameters).forEach(([paramName, paramDef]) => {
-                const inputId = `${methodType}-param-${paramName}`;
-                const input = document.getElementById(inputId);
-                
-                if (!input) return;
-                
-                let value = input.value.trim();
-                
-                // Skip empty values unless required
-                if (!value && !paramDef.required) {
-                    return;
-                }
-                
-                // Validate required parameters
-                if (paramDef.required && !value) {
-                    throw new Error(`Required parameter '${paramName}' is missing`);
-                }
-                
-                // Parse value based on type
-                if (paramDef.type === 'kwargs') {
-                    try {
-                        parameters[paramName] = JSON.parse(value);
-                    } catch (error) {
-                        throw new Error(`Invalid JSON for parameter '${paramName}': ${error.message}`);
-                    }
-                } else if (paramDef.type === 'int') {
-                    const intValue = parseInt(value);
-                    if (isNaN(intValue)) {
-                        throw new Error(`Parameter '${paramName}' must be an integer`);
-                    }
-                    parameters[paramName] = intValue;
-                } else if (paramDef.type === 'float') {
-                    const floatValue = parseFloat(value);
-                    if (isNaN(floatValue)) {
-                        throw new Error(`Parameter '${paramName}' must be a number`);
-                    }
-                    parameters[paramName] = floatValue;
-                } else {
-                    // String, matrix, or other types - use as-is
-                    parameters[paramName] = value;
-                }
-            });
-            
-            return parameters;
-        }
-
-        // Control functions
-        async function switchDataManager(dataManager = null) {
-            if (!dataManager) {
-                const selectElement = document.getElementById('data-manager-select');
-                dataManager = selectElement?.value;
-            }
-            if (!dataManager) return;
-            
-            try {
-                showLoadingOverlay('Switching data manager...');
-                const response = await fetch('/api/switch-data-manager', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data_manager: dataManager })
-                });
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    await loadStatus();
-                    await loadAndRenderPlot();
-                    await refreshDataTree();
-                } else {
-                    throw new Error(result.error || 'Failed to switch data manager');
-                }
-            } catch (error) {
-                console.error('Error switching data manager:', error);
-                showError('Failed to switch data manager: ' + error.message);
-            } finally {
-                hideLoadingOverlay();
-            }
-        }
-
-        async function setColorSourceFromIndex(indexName, dmName) {
-            if (!indexName || !dmName) return;
-            
-            try {
-                showLoadingOverlay('Setting color source...');
-                const colorSource = `index:${indexName}`;
-                const response = await fetch('/api/set-color-source', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        color_source: colorSource,
-                        source_data_manager: dmName 
-                    })
-                });
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    await loadAndRenderPlot();
-                    await refreshDataTree();
-                    showSuccess(`Color set to index: ${indexName} from ${dmName}`);
-                } else {
-                    throw new Error(result.error || 'Failed to set color source');
-                }
-            } catch (error) {
-                console.error('Error setting color source:', error);
-                showError('Failed to set color source: ' + error.message);
-            } finally {
-                hideLoadingOverlay();
-            }
-        }
-
-        async function createAugmentation() {
-            const method = document.getElementById('augmentation-method').value;
-            const dataSource = document.getElementById('augmentation-data-source').value;
-            const type = document.getElementById('augmentation-type').value || method;
-            
-            if (!method) {
-                showError('Please select an augmentation method');
-                return;
-            }
-            
-            if (!dataSource) {
-                showError('Please select a data source');
-                return;
-            }
-            
-            // Collect parameters from dynamically generated inputs
-            let parameters = {};
-            try {
-                parameters = collectParameters('augmentation', method);
-            } catch (error) {
-                showError(error.message);
-                return;
-            }
-            
-            try {
-                showLoadingOverlay('Creating augmentation...');
-                const response = await fetch('/api/augment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        method,
-                        augmentation_type: type,
-                        data_source: dataSource,
-                        parameters
-                    })
-                });
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    await loadStatus();
-                    await loadAndRenderPlot();
-                    await refreshDataTree();
-                    showSuccess('Augmentation created successfully!');
-                } else {
-                    throw new Error(result.error || 'Failed to create augmentation');
-                }
-            } catch (error) {
-                console.error('Error creating augmentation:', error);
-                showError('Failed to create augmentation: ' + error.message);
-            } finally {
-                hideLoadingOverlay();
-            }
-        }
-
-        async function createIndex() {
-            const method = document.getElementById('index-method').value;
-            const dataSource = document.getElementById('index-data-source').value;
-            const type = document.getElementById('index-type').value || method;
-            
-            if (!method) {
-                showError('Please select an index method');
-                return;
-            }
-            
-            if (!dataSource) {
-                showError('Please select a data source');
-                return;
-            }
-            
-            // Collect parameters from dynamically generated inputs
-            let parameters = {};
-            try {
-                parameters = collectParameters('index', method);
-            } catch (error) {
-                showError(error.message);
-                return;
-            }
-            
-            try {
-                showLoadingOverlay('Creating index...');
-                const response = await fetch('/api/index', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        method,
-                        index_type: type,
-                        data_source: dataSource,
-                        parameters
-                    })
-                });
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    await loadStatus();
-                    await loadAndRenderPlot();
-                    await refreshDataTree();
-                    showSuccess('Index created successfully!');
-                } else {
-                    throw new Error(result.error || 'Failed to create index');
-                }
-            } catch (error) {
-                console.error('Error creating index:', error);
-                showError('Failed to create index: ' + error.message);
-            } finally {
-                hideLoadingOverlay();
-            }
-        }
-
-        // Quick action functions for no-data suggestions
-        async function createTSNEAugmentation() {
-            document.getElementById('augmentation-method').value = 'tsne';
-            document.getElementById('augmentation-data-source').value = 'primary';
-            document.getElementById('augmentation-type').value = 'tsne_2d';
-            document.getElementById('augmentation-params').value = '{"n_components": 2}';
-            await createAugmentation();
-        }
-
-        async function createUMAPAugmentation() {
-            document.getElementById('augmentation-method').value = 'umap';
-            document.getElementById('augmentation-data-source').value = 'primary';
-            document.getElementById('augmentation-type').value = 'umap_2d';
-            document.getElementById('augmentation-params').value = '{"n_components": 2}';
-            await createAugmentation();
-        }
-
-        async function switchToSelectedDataManager() {
-            const selectElement = document.getElementById('switch-data-manager-select');
-            if (selectElement && selectElement.value) {
-                await switchDataManager(selectElement.value);
-                // Reset the dropdown
-                selectElement.value = '';
-            }
-        }
-
-        function showLoadingOverlay(message) {
-            const overlay = document.getElementById('loading-overlay');
-            document.getElementById('loading-message').textContent = message;
-            overlay.style.display = 'flex';
-        }
-
-        function hideLoadingOverlay() {
-            document.getElementById('loading-overlay').style.display = 'none';
-        }
-
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = message;
-            document.querySelector('.sidebar').insertBefore(errorDiv, document.querySelector('.sidebar').firstChild);
-            
-            setTimeout(() => {
-                errorDiv.remove();
-            }, 5000);
-        }
-
-        function showSuccess(message) {
-            const successDiv = document.createElement('div');
-            successDiv.className = 'success-message';
-            successDiv.textContent = message;
-            document.querySelector('.sidebar').insertBefore(successDiv, document.querySelector('.sidebar').firstChild);
-            
-            setTimeout(() => {
-                successDiv.remove();
-            }, 3000);
-        }
-
-        // Tree state management
-        let treeState = {
-            expandedNodes: new Set(),
-            selectedNode: null
-        };
-
-        // Tree viewer functions
-        async function buildDataTree() {
-            try {
-                const treeContainer = document.getElementById('data-tree');
-                
-                if (!currentStatus) {
-                    treeContainer.innerHTML = '<div class="tree-empty">No data available</div>';
-                    return;
-                }
-
-                // Check if tree already exists and if we need to rebuild
-                const existingTree = treeContainer.querySelector('.tree-node');
-                const needsRebuild = shouldRebuildTree();
-                
-                if (existingTree && !needsRebuild) {
-                    // Update existing tree instead of regenerating
-                    await updateExistingTree();
-                } else {
-                    // Full tree rebuild (initial creation or new augmentations)
-                    const treeHTML = await generateTreeHTML();
-                    treeContainer.innerHTML = treeHTML;
-                    addTreeEventListeners();
-                }
-                
-                // Update current data manager info
-                updateCurrentDataInfo();
-                
-            } catch (error) {
-                console.error('Error building data tree:', error);
-                document.getElementById('data-tree').innerHTML = '<div class="tree-empty">Error loading tree</div>';
-            }
-        }
-
-        function shouldRebuildTree() {
-            // Check if we have new augmentations that aren't in the current tree
-            if (!currentStatus || !currentStatus.augmentation_hierarchy) return true;
-            
-            const existingNodes = document.querySelectorAll('.tree-node-header[data-dm]');
-            const existingDMs = Array.from(existingNodes).map(node => node.getAttribute('data-dm'));
-            
-            // Check if all available augmentations are present in the tree
-            const allAvailableDMs = ['primary', ...(currentStatus.available_augmentations || [])];
-            
-            // Check for new data managers
-            const hasNewDataManagers = allAvailableDMs.some(dm => !existingDMs.includes(dm));
-            
-            // Check for new indexes by comparing with the last known indexes
-            const hasNewIndexes = checkForNewIndexes();
-            
-            return hasNewDataManagers || hasNewIndexes;
-        }
-        
-        function checkForNewIndexes() {
-            // Get current indexes from the tree
-            const existingIndexes = document.querySelectorAll('.tree-item[data-index]');
-            const existingIndexNames = Array.from(existingIndexes).map(item => item.getAttribute('data-index'));
-            
-            // Get all available indexes from current status
-            const availableIndexes = currentStatus.available_indexes || [];
-            
-            // Check if there are any new indexes
-            return availableIndexes.some(indexName => !existingIndexNames.includes(indexName));
-        }
-
-        async function updateExistingTree() {
-            // Only update the "current" indicators and data manager info
-            // Preserve expanded/collapsed state
-            updateCurrentIndicators();
-            updateCurrentDataInfo();
-        }
-
-        function updateCurrentIndicators() {
-            // Remove all "current" indicators
-            document.querySelectorAll('.tree-item-count').forEach(count => {
-                if (count.textContent === 'current') {
-                    count.remove();
-                }
-            });
-
-            // Add "current" indicator to the current data manager
-            const currentDM = currentStatus.current_data_manager;
-            const currentHeader = document.querySelector(`.tree-node-header[data-dm="${currentDM}"]`);
-            if (currentHeader) {
-                const countDiv = document.createElement('div');
-                countDiv.className = 'tree-item-count';
-                countDiv.textContent = 'current';
-                currentHeader.appendChild(countDiv);
-            }
-        }
-
-        async function generateTreeHTML() {
-            if (!currentStatus) return '<div class="tree-empty">No data available</div>';
-
-            let html = '';
-            
-            // Build tree starting with primary data manager
-            const primaryDataManager = 'primary';
-            const currentDataManager = currentStatus.current_data_manager;
-            const isPrimaryCurrent = primaryDataManager === currentDataManager;
-            const isPrimaryExpanded = treeState.expandedNodes.has(primaryDataManager);
-            
-            html += `
-                <div class="tree-node">
-                    <div class="tree-toggle ${isPrimaryExpanded ? 'expanded' : ''}" data-dm="${primaryDataManager}">${isPrimaryExpanded ? '▼' : '▶'}</div>
-                    <div class="tree-node-header tooltip" data-dm="${primaryDataManager}" title="Primary data manager containing original data">
-                        <div class="tree-icon">📊</div>
-                        <div class="tree-label">${primaryDataManager}</div>
-                        ${isPrimaryCurrent ? '<div class="tree-item-count">current</div>' : ''}
-                    </div>
-                    <div class="tree-node-content ${isPrimaryExpanded ? '' : 'collapsed'}">
-                        ${await generateDataManagerContent(primaryDataManager)}
-                    </div>
-                </div>
-            `;
-            
-            return html || '<div class="tree-empty">No data managers found</div>';
-        }
-
-        async function generateDataManagerContent(dmName) {
-            let html = '';
-            
-            try {
-                // Get indexes for this specific data manager
-                const indexesResponse = await fetch(`/api/indexes?data_manager=${dmName}`);
-                if (indexesResponse.ok) {
-                    const indexesData = await indexesResponse.json();
-                    const indexes = indexesData.indexes || {};
-                    const indexNames = indexesData.index_names || {};
-                    
-                    if (Object.keys(indexes).length > 0) {
-                        html += '<div class="tree-item"><div class="tree-item-icon">🔍</div><div class="tree-item-label">Indexes</div></div>';
-                        
-                        for (const [indexName, indexData] of Object.entries(indexes)) {
-                            const displayName = indexNames[indexName] || indexName;
-                            const count = Array.isArray(indexData) ? indexData.length : 'N/A';
-                            
-                            // Check if this index has valid shape for coloring
-                            const currentDataShape = currentStatus.data_info ? currentStatus.data_info.shape : null;
-                            const isValidForColoring = currentDataShape && Array.isArray(indexData) && 
-                                (indexData.length === currentDataShape[0] || indexData.length === currentDataShape[0]);
-                            
-                            const tooltip = `Index: ${displayName}\nType: ${indexName}\nSize: ${count} items\nSource: ${dmName}${isValidForColoring ? '\n✅ Valid for coloring' : '\n❌ Invalid shape for coloring'}`;
-                            const colorClass = isValidForColoring ? 'valid-color' : 'invalid-color';
-                            
-                            html += `
-                                <div class="tree-item tooltip ${colorClass}" title="${tooltip}" data-index="${indexName}" data-dm="${dmName}">
-                                    <div class="tree-item-icon">📋</div>
-                                    <div class="tree-item-label">${displayName}</div>
-                                    <div class="tree-item-count">${count}</div>
-                                    ${isValidForColoring ? '<div class="tree-item-badge">🎨</div>' : ''}
-                                </div>
-                            `;
-                        }
-                    } else {
-                        html += '<div class="tree-empty">No indexes</div>';
-                    }
-                }
-                
-                // Show augmentations as expandable nodes for this data manager
-                if (currentStatus.augmentation_hierarchy && currentStatus.augmentation_hierarchy[dmName]) {
-                    const children = currentStatus.augmentation_hierarchy[dmName];
-                    
-                    if (children.length > 0) {
-                        html += '<div class="tree-item"><div class="tree-item-icon">🔄</div><div class="tree-item-label">Augmentations</div></div>';
-                        
-                        for (const childName of children) {
-                            const isCurrent = childName === currentStatus.current_data_manager;
-                            const isChildExpanded = treeState.expandedNodes.has(childName);
-                            const tooltip = `Data Manager: ${childName}\nClick to expand or switch to this data manager`;
-                            
-                            html += `
-                                <div class="tree-node" style="margin-left: 16px;">
-                                    <div class="tree-toggle ${isChildExpanded ? 'expanded' : ''}" data-dm="${childName}">${isChildExpanded ? '▼' : '▶'}</div>
-                                    <div class="tree-node-header tooltip" data-dm="${childName}" title="${tooltip}">
-                                        <div class="tree-icon">📈</div>
-                                        <div class="tree-label">${childName}</div>
-                                        ${isCurrent ? '<div class="tree-item-count">current</div>' : ''}
-                                    </div>
-                                    <div class="tree-node-content ${isChildExpanded ? '' : 'collapsed'}">
-                                        ${await generateDataManagerContent(childName)}
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    } else {
-                        html += '<div class="tree-empty">No augmentations</div>';
-                    }
-                } else {
-                    html += '<div class="tree-empty">No augmentations</div>';
-                }
-                
-            } catch (error) {
-                console.error('Error generating content for data manager:', dmName, error);
-                html += '<div class="tree-empty">Error loading content</div>';
-            }
-            
-            return html;
-        }
-
-        async function updateCurrentDataInfo() {
-            const infoContainer = document.getElementById('current-data-info');
-            
-            if (!currentStatus || !currentStatus.data_info) {
-                infoContainer.innerHTML = '<div class="data-info-loading">No data info available</div>';
-                return;
-            }
-            
-            const dataInfo = currentStatus.data_info;
-            const currentDM = currentStatus.current_data_manager;
-            
-            let html = `
-                <div class="data-info-item">
-                    <span class="data-info-label">Data Manager:</span>
-                    <span class="data-info-value">${currentDM}</span>
-                </div>
-            `;
-            
-            if (dataInfo.shape) {
-                html += `
-                    <div class="data-info-item">
-                        <span class="data-info-label">Shape:</span>
-                        <span class="data-info-value">${dataInfo.shape.join(' × ')}</span>
-                    </div>
-                `;
-            }
-            
-            if (dataInfo.dimensions) {
-                html += `
-                    <div class="data-info-item">
-                        <span class="data-info-label">Dimensions:</span>
-                        <span class="data-info-value">${dataInfo.dimensions}D</span>
-                    </div>
-                `;
-            }
-            
-            infoContainer.innerHTML = html;
-        }
-
-        function addTreeEventListeners() {
-            // Add click handlers for toggle buttons (expand/collapse only)
-            document.querySelectorAll('.tree-toggle').forEach(toggle => {
-                toggle.addEventListener('click', function(e) {
-                    e.stopPropagation(); // Prevent event bubbling
-                    
-                    const node = this.closest('.tree-node');
-                    const content = node.querySelector('.tree-node-content');
-                    const dmName = this.getAttribute('data-dm');
-                    
-                    if (!content) {
-                        console.error('Missing content element');
-                        return;
-                    }
-                    
-                    // Toggle expanded state
-                    const isExpanded = this.classList.contains('expanded');
-                    
-                    if (isExpanded) {
-                        // Collapse
-                        this.classList.remove('expanded');
-                        content.classList.add('collapsed');
-                        this.textContent = '▶';
-                        treeState.expandedNodes.delete(dmName);
-                    } else {
-                        // Expand
-                        this.classList.add('expanded');
-                        content.classList.remove('collapsed');
-                        this.textContent = '▼';
-                        treeState.expandedNodes.add(dmName);
-                    }
-                });
-            });
-
-            // Add click handlers for tree node headers (selection only)
-            document.querySelectorAll('.tree-node-header').forEach(header => {
-                header.addEventListener('click', function(e) {
-                    e.stopPropagation(); // Prevent event bubbling
-                    
-                    const dmName = this.getAttribute('data-dm');
-                    
-                    // Switch to this data manager
-                    if (dmName && currentStatus.available_augmentations.includes(dmName)) {
-                        switchDataManager(dmName);
-                    }
-                });
-            });
-            
-            // Add click handlers for valid indexes to set color source
-            document.querySelectorAll('.tree-item.valid-color').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.stopPropagation(); // Prevent event bubbling
-                    
-                    const indexName = this.getAttribute('data-index');
-                    const dmName = this.getAttribute('data-dm');
-                    
-                    if (indexName && dmName) {
-                        setColorSourceFromIndex(indexName, dmName);
-                    }
-                });
-            });
-            
-            // Add click handlers for color scale editor (on the paint emoji)
-            document.querySelectorAll('.tree-item.valid-color .tree-item-badge').forEach(badge => {
-                badge.addEventListener('click', function(e) {
-                    e.stopPropagation(); // Prevent event bubbling
-                    openColorScaleEditor();
-                });
-            });
-        }
-
-        // Refresh tree when data changes
-        async function refreshDataTree() {
-            // Preserve expanded state when refreshing
-            const currentExpanded = new Set(treeState.expandedNodes);
-            await buildDataTree();
-            await updateCurrentDataInfo();
-            
-            // Restore expanded state
-            treeState.expandedNodes = currentExpanded;
-            
-            // Update the visual state of toggle buttons
-            document.querySelectorAll('.tree-toggle').forEach(toggle => {
-                const dmName = toggle.getAttribute('data-dm');
-                if (treeState.expandedNodes.has(dmName)) {
-                    toggle.classList.add('expanded');
-                    toggle.textContent = '▼';
-                    const content = toggle.closest('.tree-node').querySelector('.tree-node-content');
-                    if (content) content.classList.remove('collapsed');
-                } else {
-                    toggle.classList.remove('expanded');
-                    toggle.textContent = '▶';
-                    const content = toggle.closest('.tree-node').querySelector('.tree-node-content');
-                    if (content) content.classList.add('collapsed');
-                }
-            });
         }
     </script>
 </body>

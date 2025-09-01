@@ -1,17 +1,23 @@
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, redirect, session, make_response
 import os
 import numpy as np
+import pandas as pd
+import json
+import requests
+from urllib.parse import quote_plus, urlencode
 from functools import lru_cache
 from ViewerManager import ViewerManager
 from DataManager import DataManager, Index
 import argparse
+import secrets
 
 
 class ManagerManager:
     # Do not change the fucking port.
-    def __init__(self, run_app: bool=True, port: int=5000, small_data: bool=False):
+    def __init__(self, run_app: bool=True, port: int=8000, small_data: bool=False):
         self.data_manager = DataManager()
-
+        
+        # Load data
         if small_data:
             # Create small test data
             n = 200
@@ -20,39 +26,241 @@ class ManagerManager:
         else:
             embeddings_file = "./music-clips-embeddings.npy"
             tsne_file = "./music-clips-tsne.npy"
-            
+            metadata_file = "./wikipedia_musicians.csv"
+
             self.data_manager.load_data(file_path=embeddings_file)
-            # Only load t-SNE if the file exists
-            if os.path.exists(tsne_file):
+            # Load jittered t-SNE data (pre-processed to prevent overlap)
+            jittered_tsne_file = "./music-clips-tsne-jittered.npy"
+            if os.path.exists(jittered_tsne_file):
+                print(f"Loading jittered t-SNE data from {jittered_tsne_file}")
+                tsne_data = np.load(jittered_tsne_file)
+                self.data_manager.augmentations.add_data_manager(DataManager(data=tsne_data, name="tsne"))
+                print(f"Loaded jittered t-SNE data with shape: {tsne_data.shape}")
+            elif os.path.exists(tsne_file):
+                print(f"Jittered t-SNE file not found, loading original from {tsne_file}")
                 tsne_data = np.load(tsne_file)
                 self.data_manager.augmentations.add_data_manager(DataManager(data=tsne_data, name="tsne"))
+                print(f"Loaded original t-SNE data with shape: {tsne_data.shape}")
+            else:
+                print(f"Neither jittered nor original t-SNE file found")
+            if os.path.exists( metadata_file ):
+                print(f"Loading metadata from {metadata_file}")
+                metadata = pd.read_csv(metadata_file)
+                print(f"Loaded metadata shape: {metadata.shape}")
+                print(f"Metadata columns: {metadata.columns.tolist()}")
+                self.data_manager.metadata = metadata
+            else:
+                print(f"Metadata file {metadata_file} not found")
+            
+            # Load HDBSCAN clusters as an index
+            hdbscan_file = "./music-clips-hdbscan.npy"
+            centroids_file = "./music-clips-centroids.npy"
+            if os.path.exists(hdbscan_file):
+                print(f"Loading HDBSCAN clusters from {hdbscan_file}")
+                clusters = np.load(hdbscan_file)
+                print(f"Loaded clusters shape: {clusters.shape}")
+                
+                # Load cluster centroids if available
+                cluster_centroids = None
+                if os.path.exists(centroids_file):
+                    print(f"Loading cluster centroids from {centroids_file}")
+                    cluster_centroids = np.load(centroids_file, allow_pickle=True).item()
+                    print(f"Loaded centroids for {len(cluster_centroids)} clusters")
+                
+                # Create an index from the clusters
+                from DataManager import Index
+                cluster_index = Index(clusters, {"name": "hdbscan_clusters", "display_name": "HDBSCAN Clusters"})
+                self.data_manager.indexes.add_index(cluster_index)
+                
+                # Store centroids in the data manager for color assignment
+                if cluster_centroids:
+                    self.data_manager.cluster_centroids = cluster_centroids
+                
+                print(f"Added HDBSCAN clusters as index")
+            else:
+                print(f"HDBSCAN clusters file {hdbscan_file} not found")
         
         self.viewer_manager = ViewerManager(self.data_manager, "data")
         # Only set t-SNE as viewed data manager if it exists
         if self.data_manager.augmentations.has_data_manager("tsne"):
             self.viewer_manager.set_viewed_data_manager(self.data_manager.augmentations.get_data_manager("tsne"))
-
-        self.app = Flask(__file__)
-
-        self.app.route("/")(self.home)
-        self.app.route("/api/status")(self.status_api)
-        self.app.route("/api/data.bin")(self.data_api_binary)
-        self.app.route("/api/indexes")(self.indexes_api)
-        self.app.route("/api/augment", methods=["POST"])(self.augment_api)
-        self.app.route('/api/switch-index', methods=['POST'])(self.switch_index_api)
-        self.app.route('/api/switch-data-manager', methods=['POST'])(self.switch_data_manager_api)
+            
+            # Set HDBSCAN clusters as the default color source if available
+            if "hdbscan_clusters" in self.data_manager.indexes.indexes:
+                self.viewer_manager.set_color_source("index:hdbscan_clusters", "hdbscan_clusters", "primary")
+                print("Set HDBSCAN clusters as default color source")
+        
+        # Spotify OAuth configuration
+        self.spotify_client_id = os.getenv('SPOTIFY_CLIENT_ID', 'your_spotify_client_id')
+        self.spotify_client_secret = os.getenv('SPOTIFY_CLIENT_SECRET', 'your_spotify_client_secret')
+        self.spotify_redirect_uri = 'http://127.0.0.1:8000/callback'
+        self.spotify_scopes = 'user-read-private user-read-email user-read-playback-state user-modify-playback-state streaming'
+        
+        # Flask app setup
+        self.app = Flask(__name__)
+        self.app.secret_key = secrets.token_hex(16)
+        
+        # Add routes
+        self.app.route('/')(self.index)
+        self.app.route('/api/status')(self.status_api)
+        self.app.route('/api/data.bin')(self.data_api)
         self.app.route('/api/metadata')(self.metadata_api)
-        self.app.route('/api/method-parameters')(self.method_parameters_api)
-        self.app.route('/api/index', methods=['POST'])(self.index_api)
-        self.app.route('/api/color-sources')(self.color_sources_api)
-        self.app.route('/api/set-color-source', methods=['POST'])(self.set_color_source_api)
         self.app.route('/api/color-data')(self.color_data_api)
-        self.app.route('/api/dataset-info')(self.dataset_info_api)
+        self.app.route('/api/cluster-centroids')(self.cluster_centroids_api)
+        self.app.route('/api/cluster-background')(self.cluster_background_api)
+        self.app.route('/api/data-bounds')(self.data_bounds_api)
+        self.app.route('/api/spotify-search')(self.spotify_search_api)
+        self.app.route('/login')(self.spotify_login)
+        self.app.route('/callback')(self.spotify_callback)
+        self.app.route('/logout')(self.spotify_logout)
         
         self._default_port = port
+        
         if run_app:
-            # Normal interactive run
-            self.app.run( port=port )
+            self.app.run(port=port, host='0.0.0.0')
+    
+    def index(self):
+        return render_template('index.html')
+    
+    def spotify_login(self):
+        """Initiate Spotify OAuth login"""
+        auth_url = 'https://accounts.spotify.com/authorize?' + urlencode({
+            'client_id': self.spotify_client_id,
+            'response_type': 'code',
+            'redirect_uri': self.spotify_redirect_uri,
+            'scope': self.spotify_scopes,
+            'state': secrets.token_hex(16)
+        })
+        return redirect(auth_url)
+    
+    def spotify_callback(self):
+        """Handle Spotify OAuth callback"""
+        code = request.args.get('code')
+        if code:
+            # Exchange code for access token
+            token_url = 'https://accounts.spotify.com/api/token'
+            data = {
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': self.spotify_redirect_uri,
+                'client_id': self.spotify_client_id,
+                'client_secret': self.spotify_client_secret
+            }
+            
+            response = requests.post(token_url, data=data)
+            if response.status_code == 200:
+                token_data = response.json()
+                
+                # Store tokens in cookies
+                resp = make_response(redirect('/'))
+                resp.set_cookie('spotify_access_token', token_data['access_token'], max_age=3600)
+                if 'refresh_token' in token_data:
+                    resp.set_cookie('spotify_refresh_token', token_data['refresh_token'], max_age=31536000)
+                
+                return resp
+        
+        return redirect('/')
+    
+    def spotify_logout(self):
+        """Logout from Spotify"""
+        resp = make_response(redirect('/'))
+        resp.delete_cookie('spotify_access_token')
+        resp.delete_cookie('spotify_refresh_token')
+        return resp
+    
+    def get_spotify_token(self):
+        """Get valid Spotify access token"""
+        access_token = request.cookies.get('spotify_access_token')
+        if not access_token:
+            return None
+        
+        # Check if token is still valid
+        headers = {'Authorization': f'Bearer {access_token}'}
+        response = requests.get('https://api.spotify.com/v1/me', headers=headers)
+        
+        if response.status_code == 401:
+            # Token expired, try to refresh
+            refresh_token = request.cookies.get('spotify_refresh_token')
+            if refresh_token:
+                token_url = 'https://accounts.spotify.com/api/token'
+                data = {
+                    'grant_type': 'refresh_token',
+                    'refresh_token': refresh_token,
+                    'client_id': self.spotify_client_id,
+                    'client_secret': self.spotify_client_secret
+                }
+                
+                response = requests.post(token_url, data=data)
+                if response.status_code == 200:
+                    token_data = response.json()
+                    return token_data['access_token']
+        
+        return access_token if response.status_code == 200 else None
+    
+    def spotify_search_api(self):
+        """Search for Spotify tracks by artist name"""
+        try:
+            artist_name = request.args.get('artist', '')
+            if not artist_name:
+                return jsonify({'error': 'No artist name provided'}), 400
+            
+            # Check if user is authenticated
+            access_token = self.get_spotify_token()
+            if not access_token:
+                return jsonify({
+                    'error': 'Not authenticated',
+                    'needs_auth': True,
+                    'login_url': '/login'
+                }), 401
+            
+            # Search for tracks by artist
+            headers = {'Authorization': f'Bearer {access_token}'}
+            search_url = 'https://api.spotify.com/v1/search'
+            params = {
+                'q': f'artist:"{artist_name}"',
+                'type': 'track',
+                'limit': 5,
+                'market': 'US'
+            }
+            
+            response = requests.get(search_url, headers=headers, params=params)
+            if response.status_code == 200:
+                data = response.json()
+                tracks = data.get('tracks', {}).get('items', [])
+                
+                if tracks:
+                    # Get the first track
+                    track = tracks[0]
+                    track_info = {
+                        'artist': artist_name,
+                        'track_name': track['name'],
+                        'track_id': track['id'],
+                        'album_name': track['album']['name'],
+                        'album_image': track['album']['images'][0]['url'] if track['album']['images'] else None,
+                        'preview_url': track['preview_url'],
+                        'external_url': track['external_urls']['spotify'],
+                        'embed_url': f"https://open.spotify.com/embed/track/{track['id']}?utm_source=generator",
+                        'found': True,
+                        'message': f"Found track: {track['name']} by {artist_name}"
+                    }
+                    
+                    # Add alternative tracks
+                    if len(tracks) > 1:
+                        track_info['alternative_tracks'] = tracks[1:5]
+                    
+                    return jsonify(track_info)
+                else:
+                    return jsonify({
+                        'artist': artist_name,
+                        'found': False,
+                        'message': f"No tracks found for {artist_name}",
+                        'search_url': f"https://open.spotify.com/search/{quote_plus(artist_name)}"
+                    })
+            else:
+                return jsonify({'error': 'Spotify API error'}), 500
+                
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
     def run(self, port: int=None, debug: bool=False):
         """Helper to run the Flask app (used by tests)."""
@@ -134,12 +342,12 @@ class ManagerManager:
                 'data_manager_shapes': data_manager_shapes,
                 'augmentation_methods': self.viewer_manager.get_augmentation_methods(),
                 'index_methods': self.viewer_manager.get_index_methods(),
-                'current_color_source': self.viewer_manager.active_viewport_metadata.get("color_source", "index:tsne")
+                'current_color_source': self.viewer_manager.active_viewport_metadata.get("color_source", "index:hdbscan_clusters")
             })
         except Exception as exc:
             return jsonify({'error': str(exc)}), 500
 
-    def data_api_binary(self):
+    def data_api(self):
         """Serve current data as raw binary float32 interleaved [x0,y0,x1,y1,...]."""
         try:
         
@@ -172,6 +380,7 @@ class ManagerManager:
             resp.headers['X-Columns'] = '2'
             resp.headers['X-Count'] = str(coords.shape[0])
             return resp
+            
         except Exception as exc:
             return jsonify({'error': str(exc)}), 500
 
@@ -336,14 +545,20 @@ class ManagerManager:
     def metadata_api(self):
         """Get metadata for current data."""
         try:
-            metadata = self.viewer_manager.get_metadata()
+            # Always get metadata from the primary data manager since that's where CSV data is loaded
+            metadata = self.viewer_manager.primary_data_manager.get_metadata()
+            print(f"Metadata API: metadata = {metadata}")
             if metadata is None:
+                print("Metadata API: metadata is None")
                 return jsonify({'metadata': None})
             
+            records = metadata.to_dict('records')
+            print(f"Metadata API: records = {records[:2] if records else None}")  # Show first 2 records
             return jsonify({
-                'metadata': metadata.to_dict('records')
+                'metadata': records
             })
         except Exception as exc:
+            print(f"Metadata API error: {exc}")
             return jsonify({'error': str(exc)}), 500
 
 
@@ -421,7 +636,10 @@ class ManagerManager:
         """Get available color sources."""
         try:
             color_sources = self.viewer_manager.get_available_color_sources()
-            current_color_source = self.viewer_manager.active_viewport_metadata.get("color_source", "index:tsne")
+            current_color_source = self.viewer_manager.active_viewport_metadata.get("color_source", "index:hdbscan_clusters")
+            
+            print(f"Available color sources: {color_sources}")
+            print(f"Current color source: {current_color_source}")
             
             return jsonify({
                 'color_sources': color_sources,
@@ -478,6 +696,50 @@ class ManagerManager:
             })
         except Exception as exc:
             return jsonify({'error': str(exc)}), 500
+
+    def cluster_centroids_api(self):
+        """Get cluster centroids for spatial color assignment."""
+        try:
+            centroids = getattr(self.data_manager, 'cluster_centroids', None)
+            if centroids is None:
+                return jsonify({'centroids': None})
+            
+            # Convert numpy arrays to lists for JSON serialization
+            serializable_centroids = {}
+            for cluster_id, centroid in centroids.items():
+                serializable_centroids[int(cluster_id)] = centroid.tolist()
+            
+            return jsonify({
+                'centroids': serializable_centroids
+            })
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 500
+
+    def cluster_background_api(self):
+        """Serve the cluster background SVG."""
+        try:
+            svg_path = "./cluster_background.svg"
+            if os.path.exists(svg_path):
+                with open(svg_path, 'r') as f:
+                    svg_content = f.read()
+                return Response(svg_content, mimetype='image/svg+xml')
+            else:
+                return jsonify({'error': 'SVG background not found'}), 404
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    def data_bounds_api(self):
+        """Get data bounds for zoom constraints."""
+        try:
+            bounds_path = "./data_bounds.json"
+            if os.path.exists(bounds_path):
+                with open(bounds_path, 'r') as f:
+                    bounds = json.load(f)
+                return jsonify(bounds)
+            else:
+                return jsonify({'error': 'Bounds file not found'}), 404
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
     def dataset_info_api(self):
         """Get detailed information about the current dataset."""
