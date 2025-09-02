@@ -207,12 +207,12 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-*.npy
-*.csv
+# *.npy
+# *.csv
 .cursor
 *test*.json
 spotify-auth
 .DS_Store
-*.safetensors
-*.pth
-*.pt
+# *.safetensors
+# *.pth
+textmodel/music_audioset_epoch_15_esc_90.14.pt
