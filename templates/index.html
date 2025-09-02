@@ -129,13 +129,12 @@
 
         .artist-search-input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 25px;
-            background: rgba(0, 0, 0, 0.7);
+            padding: 12px 16px 12px 8px;
+            border: none;
+            border-radius: 0;
+            background: transparent;
             color: white;
             font-size: 16px;
-            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
         }
 
@@ -148,6 +147,65 @@
 
         .artist-search-input::placeholder {
             color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-mode-selector {
+            flex-shrink: 0;
+            width: 80px;
+            padding: 8px 0 8px 12px;
+        }
+
+        .search-mode-select {
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            width: 100%;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        .search-mode-select:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: #666;
+        }
+
+        .search-mode-select:focus {
+            border-color: #1DB954;
+            box-shadow: 0 0 5px rgba(29, 185, 84, 0.3);
+        }
+
+        /* Style the dropdown options */
+        .search-mode-select option {
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 8px;
+        }
+
+        /* Ensure proper spacing and prevent overlap */
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* Vertical separator line */
+        .search-separator {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.3);
+            margin: 0 8px;
+            flex-shrink: 0;
         }
 
         .close-search-btn {
@@ -340,7 +398,7 @@
         }
 
         .point-action-btn:disabled {
-            background: #ccc;
+            background: #6c757d;
             cursor: not-allowed;
         }
 
@@ -542,6 +600,94 @@
         .color-scale-help p {
             margin: 0;
         }
+
+        /* Chatbot Styles */
+        .chatbot-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .chatbot-section h4 {
+            margin-bottom: 12px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        #initiate-chat-btn {
+            width: 100%;
+            padding: 10px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        #initiate-chat-btn:hover {
+            background: #218838;
+        }
+
+        #initiate-chat-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .chat-interface {
+            margin-top: 16px;
+        }
+
+        .chat-messages {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 12px;
+            background: #f8f9fa;
+            margin-bottom: 12px;
+        }
+
+        .chat-message {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .chat-message.user {
+            background: #007bff;
+            color: white;
+            margin-left: 20px;
+        }
+
+        .chat-message.assistant {
+            background: #e9ecef;
+            color: #333;
+            margin-right: 20px;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
     </style>
 </head>
 <body>
@@ -556,6 +702,13 @@
         <!-- Search Bar -->
         <div id="search-container" class="search-container">
             <div class="search-wrapper">
+                <div class="search-mode-selector">
+                    <select id="search-mode-select" class="search-mode-select" onchange="changeSearchMode()">
+                        <option value="artist">Artist Search</option>
+                        <option value="vibe">Vibe Search</option>
+                    </select>
+                </div>
+                <div class="search-separator"></div>
                 <input 
                     type="text" 
                     id="artist-search" 
@@ -618,6 +771,7 @@
         let colorData = null;
         let metadata = null;
         let clusterCentroids = null;
+        let clusterNames = null;
         let dataBounds = null;
         let startTime = Date.now();
         let currentStatus = null;
@@ -638,15 +792,22 @@
         let searchSuggestions = [];
         let selectedSuggestionIndex = -1;
         let searchTimeout = null;
+        let isVibeSearchMode = false;
+        let currentSimilarities = null;
+        let originalColorData = null;
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', async function() {
             await loadStatus();
             await loadMetadata();
             await loadClusterCentroids();
+            await loadClusterNames();
             await loadDataBounds();
             await loadAndRenderPlot();
             initializeSearch();
+            
+            // Set default search mode
+            isVibeSearchMode = false;
         });
 
         function initializeSearch() {
@@ -655,7 +816,7 @@
 
             if (!searchInput || !suggestionsContainer) return;
 
-            // Input event for search
+            // Input event for search (only for artist search)
             searchInput.addEventListener('input', function(e) {
                 const query = e.target.value.trim();
                 
@@ -668,10 +829,23 @@
                     return;
                 }
 
-                // Debounce search
-                searchTimeout = setTimeout(() => {
-                    performSearch(query);
-                }, 200);
+                // Only perform artist search on input (not vibe search)
+                if (!isVibeSearchMode) {
+                    // Debounce search
+                    searchTimeout = setTimeout(() => {
+                        performSearch(query);
+                    }, 200);
+                }
+            });
+
+            // Keydown event for Enter key (vibe search)
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && isVibeSearchMode) {
+                    const query = e.target.value.trim();
+                    if (query.length >= 2) {
+                        performVibeSearch(query);
+                    }
+                }
             });
 
             // Keyboard navigation
@@ -788,6 +962,121 @@
             }
         }
 
+        function changeSearchMode() {
+            const searchModeSelect = document.getElementById('search-mode-select');
+            const searchInput = document.getElementById('artist-search');
+            
+            isVibeSearchMode = searchModeSelect.value === 'vibe';
+            
+            if (isVibeSearchMode) {
+                searchInput.placeholder = 'Search by vibes, mood, genre... (Press Enter to search)';
+                
+                // Store original color data if not already stored
+                if (!originalColorData && colorData) {
+                    originalColorData = [...colorData];
+                }
+            } else {
+                searchInput.placeholder = 'Search for an artist...';
+                
+                // Reset to original colors
+                resetToOriginalColors();
+            }
+            
+            // Clear current search
+            hideSuggestions();
+            searchInput.value = '';
+        }
+
+        async function performVibeSearch(query) {
+            try {
+                console.log('Performing vibe search for:', query);
+                
+                const response = await fetch(`/api/similarity-search?query=${encodeURIComponent(query)}`);
+                const result = await response.json();
+                
+                if (result.error) {
+                    console.error('Vibe search error:', result.error);
+                    return;
+                }
+                
+                if (result.status === 'success') {
+                    console.log('Vibe search successful:', result);
+                    
+                    // Update the current status to reflect the new color source
+                    await loadStatus();
+                    
+                    // The similarity index is now created and set as the active color source
+                    // We need to reload the color data to get the new similarity values
+                    await reloadColorData();
+                    
+                    // Show similarity info
+                    showSimilarityInfo(query, result.similarities);
+                    
+                } else {
+                    console.error('Vibe search failed:', result);
+                }
+                
+            } catch (error) {
+                console.error('Vibe search failed:', error);
+            }
+        }
+
+
+
+        async function resetToOriginalColors() {
+            try {
+                // Switch back to the original cluster index
+                const response = await fetch('/api/set-color-source', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        color_source: 'index:hdbscan_clusters',
+                        source_name: 'hdbscan_clusters',
+                        source_data_manager: 'primary'
+                    })
+                });
+
+                if (response.ok) {
+                    // Update the current status to reflect the new color source
+                    await loadStatus();
+                    
+                    // Reload color data to get cluster colors
+                    await reloadColorData();
+                    console.log('Reset to original cluster colors');
+                } else {
+                    console.error('Failed to reset color source');
+                }
+            } catch (error) {
+                console.error('Error resetting to original colors:', error);
+            }
+            
+            currentSimilarities = null;
+            hideSimilarityInfo();
+        }
+
+        function showSimilarityInfo(query, similarities) {
+            // Find the highest similarity scores
+            const sortedIndices = similarities
+                .map((sim, index) => ({ sim, index }))
+                .sort((a, b) => b.sim - a.sim)
+                .slice(0, 5);
+            
+            const maxSimilarity = Math.max(...similarities);
+            const avgSimilarity = similarities.reduce((a, b) => a + b, 0) / similarities.length;
+            
+            console.log(`Vibe search results for "${query}":`);
+            console.log(`Max similarity: ${maxSimilarity.toFixed(3)}`);
+            console.log(`Average similarity: ${avgSimilarity.toFixed(3)}`);
+            console.log('Top 5 most similar points:', sortedIndices);
+        }
+
+        function hideSimilarityInfo() {
+            // Clear any similarity info display
+            console.log('Cleared similarity search results');
+        }
+
         function selectSuggestion(index) {
             const plotDiv = document.getElementById('plot');
             if (!plotDiv || !plotDiv.data || !plotDiv.data[0]) {
@@ -847,6 +1136,18 @@
             }
             
             hideSuggestions();
+            
+            // Reset to original colors when closing search bar
+            if (isVibeSearchMode) {
+                resetToOriginalColors();
+                isVibeSearchMode = false;
+                
+                // Reset search mode dropdown
+                const searchModeSelect = document.getElementById('search-mode-select');
+                if (searchModeSelect) {
+                    searchModeSelect.value = 'artist';
+                }
+            }
         }
 
         function showSearchBar() {
@@ -961,6 +1262,24 @@
             }
         }
 
+        // Load cluster names
+        async function loadClusterNames() {
+            try {
+                console.log('Loading cluster names...');
+                const response = await fetch('/api/cluster-names');
+                const result = await response.json();
+                console.log('Cluster names response:', result);
+                clusterNames = result.cluster_names || null;
+                // Make cluster names available globally for the plot
+                window.clusterNames = clusterNames;
+                console.log('Loaded cluster names:', clusterNames);
+            } catch (error) {
+                console.warn('Failed to load cluster names:', error);
+                clusterNames = null;
+                window.clusterNames = null;
+            }
+        }
+
         // Load data bounds for zoom constraints
         async function loadDataBounds() {
             try {
@@ -1042,10 +1361,6 @@
             
             return earthTonePalette[clusterId % earthTonePalette.length];
         }
-        
-
-        
-
 
         // Generate hover template with metadata
         function generateHoverTemplate(hasColorData) {
@@ -1119,6 +1434,11 @@
                 // Load color data
                 colorData = await loadColorData();
                 
+                // Store original color data for vibe search
+                if (colorData && colorData.length > 0) {
+                    originalColorData = [...colorData];
+                }
+                
                 // Set up custom color system for HDBSCAN clusters
                 const hasColorData = colorData && colorData.length > 0;
                 let markerColor;
@@ -1141,7 +1461,12 @@
                         if (clusterId === -1) {
                             return 'Noise';
                         } else {
-                            return `Cluster ${clusterId}`;
+                            // Use generated names from MusicGemma model if available
+                            if (window.clusterNames && window.clusterNames[clusterId]) {
+                                return window.clusterNames[clusterId];
+                            } else {
+                                return `Cluster ${clusterId}`;
+                            }
                         }
                     });
                 } else {
@@ -1242,7 +1567,10 @@
 
                 await Plotly.newPlot('plot', [trace], layout, config);
                 
-
+                // Add cluster name annotations if available
+                if (clusterCentroids && window.clusterNames) {
+                    addClusterNameAnnotations();
+                }
                 
                 // Store original colors for point selection highlighting
                 const plotDiv = document.getElementById('plot');
@@ -1346,6 +1674,43 @@
             }
         }
 
+        // Add cluster name annotations to the plot
+        function addClusterNameAnnotations() {
+            if (!clusterCentroids || !window.clusterNames) {
+                return;
+            }
+            
+            const annotations = [];
+            
+            for (const [clusterId, centroid] of Object.entries(clusterCentroids)) {
+                const clusterIdInt = parseInt(clusterId);
+                if (clusterIdInt === -1) continue; // Skip noise points
+                
+                const clusterName = window.clusterNames[clusterIdInt];
+                if (!clusterName) continue;
+                
+                annotations.push({
+                    x: centroid[0],
+                    y: centroid[1],
+                    text: clusterName,
+                    showarrow: false,
+                    font: {
+                        size: 14,
+                        color: '#ffffff'
+                    },
+                    bgcolor: 'rgba(0, 0, 0, 0.7)',
+                    bordercolor: '#ffffff',
+                    borderwidth: 1,
+                    xanchor: 'center',
+                    yanchor: 'middle'
+                });
+            }
+            
+            if (annotations.length > 0) {
+                Plotly.relayout('plot', { annotations: annotations });
+            }
+        }
+
         // Show helpful message when no 2D data is available
         function showNoDataMessage() {
             const plotEl = document.getElementById('plot');
@@ -1382,6 +1747,62 @@
             }
         }
 
+        // Reload color data and update plot
+        async function reloadColorData() {
+            try {
+                const newColorData = await loadColorData();
+                if (newColorData && newColorData.length > 0) {
+                    colorData = newColorData;
+                    
+                    // Update plot colors based on new color data
+                    updatePlotColorsFromColorData(newColorData);
+                }
+            } catch (error) {
+                console.error('Failed to reload color data:', error);
+            }
+        }
+
+        // Update plot colors based on color data (handles both clusters and similarities)
+        function updatePlotColorsFromColorData(colorData) {
+            const plotDiv = document.getElementById('plot');
+            if (!plotDiv || !plotDiv.data || !plotDiv.data[0]) {
+                console.warn('Plot data not available');
+                return;
+            }
+
+            // Check if this is a similarity index by looking at the current color source
+            const currentColorSource = currentStatus?.current_color_source || '';
+            const isSimilarityIndex = currentColorSource.includes('similarity_');
+            
+            console.log( colorData )
+
+            if (isSimilarityIndex) {
+                // For similarity data, let Plotly handle the coloring automatically
+                // Just pass the raw similarity scores and let Plotly create the color scale
+                Plotly.restyle(plotDiv, {
+                    'marker.color': [colorData]
+                });
+
+                console.log('Updated plot with similarity scores - Plotly will handle coloring automatically');
+            } else {
+                // Handle cluster data - use original cluster colors
+                const colors = colorData.map(clusterId => {
+                    if (clusterId === -1) {
+                        return '#006994'; // Ocean blue for noise points
+                    } else {
+                        return assignEarthToneColor(clusterId);
+                    }
+                });
+
+                // Update plot colors
+                Plotly.restyle(plotDiv, {
+                    'marker.color': [colors]
+                });
+
+                console.log('Updated plot with cluster colors');
+            }
+        }
+
         // Point selection functions
         function selectPoint(index, x, y, color) {
             selectedPointIndex = index;
@@ -1402,6 +1823,22 @@
             selectedPoint = null;
             selectedPointIndex = null;
             selectedPointDataManager = null;
+            
+            // Reset chatbot state
+            currentPointIndex = null;
+            currentConversationHistory = [];
+            
+            // Reset chatbot UI
+            const initiateBtn = document.getElementById('initiate-chat-btn');
+            const chatInterface = document.getElementById('chat-interface');
+            if (initiateBtn) {
+                initiateBtn.disabled = false;
+                initiateBtn.textContent = 'Start Conversation About This Music';
+                initiateBtn.style.display = 'block';
+            }
+            if (chatInterface) {
+                chatInterface.style.display = 'none';
+            }
         }
 
         function highlightSelectedPoint(index) {
@@ -2005,6 +2442,9 @@
             const contentDiv = document.getElementById('point-info-content');
             if (!infoContainer || !contentDiv) return;
 
+            // Set the current point index for chatbot functionality
+            currentPointIndex = pointIndex;
+
             // Get metadata for this point
             const pointMetadata = metadata[pointIndex];
             if (!pointMetadata) return;
@@ -2043,6 +2483,22 @@
                         <h4>Music</h4>
                         <div id="spotifyPlayer" class="spotify-player">
                             <div class="loading">Searching for music...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chatbot-section">
+                        <h4>AI Chat</h4>
+                        <div id="chatbot-container">
+                            <button id="initiate-chat-btn" class="btn btn-primary" onclick="initiateChat()">
+                                Start Conversation About This Music
+                            </button>
+                            <div id="chat-interface" style="display: none;">
+                                <div id="chat-messages" class="chat-messages"></div>
+                                <div class="chat-input-container">
+                                    <input type="text" id="chat-input" placeholder="Type your message..." class="chat-input">
+                                    <button onclick="sendChatMessage()" class="btn btn-sm btn-primary">Send</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2219,6 +2675,174 @@
                 messageDiv.remove();
             }, 3000);
         }
+
+        // Chatbot functionality
+        let currentConversationHistory = [];
+        let currentPointIndex = null;
+
+        function initiateChat() {
+            if (currentPointIndex === null) {
+                showError('No point selected');
+                return;
+            }
+
+            const initiateBtn = document.getElementById('initiate-chat-btn');
+            const chatInterface = document.getElementById('chat-interface');
+            const chatMessages = document.getElementById('chat-messages');
+
+            // Disable button and show loading
+            initiateBtn.disabled = true;
+            initiateBtn.textContent = 'Starting conversation...';
+
+            // Call the API to initiate conversation
+            fetch('/api/initiate-conversation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    point_index: currentPointIndex
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Initialize conversation history in the correct format
+                    currentConversationHistory = data.conversation_history || [];
+                    
+                    // Show chat interface
+                    chatInterface.style.display = 'block';
+                    initiateBtn.style.display = 'none';
+                    
+                    // Display initial message
+                    chatMessages.innerHTML = `
+                        <div class="chat-message assistant">
+                            ${data.model_response || 'Hello! I can help you discuss this music. What would you like to know?'}
+                        </div>
+                    `;
+                    
+                    showSuccess('Conversation started!');
+                } else {
+                    showError(data.error || 'Failed to start conversation');
+                    initiateBtn.disabled = false;
+                    initiateBtn.textContent = 'Start Conversation About This Music';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Failed to start conversation');
+                initiateBtn.disabled = false;
+                initiateBtn.textContent = 'Start Conversation About This Music';
+            });
+        }
+
+        function sendChatMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const chatMessages = document.getElementById('chat-messages');
+            const message = chatInput.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat display
+            chatMessages.innerHTML += `
+                <div class="chat-message user">
+                    ${message}
+                </div>
+            `;
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Add user message to conversation history in the correct format
+            currentConversationHistory.push( {
+                role: "user",
+                content: [ {
+                    type: "text",
+                    text: message
+                } ]
+            });
+            
+            // Show loading indicator
+            chatMessages.innerHTML += `
+                <div class="chat-message assistant" id="loading-message">
+                    Thinking...
+                </div>
+            `;
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Call the chat API with the conversation history in the correct format
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conversation_history: currentConversationHistory,
+                    max_new_tokens: 64
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove loading message
+                const loadingMessage = document.getElementById('loading-message');
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
+                
+                if (data.status === 'success') {
+                    // Update conversation history with the server response
+                    currentConversationHistory = data.conversation_history || currentConversationHistory;
+                    
+                    // Add assistant response to chat display
+                    chatMessages.innerHTML += `
+                        <div class="chat-message assistant">
+                            ${data.model_response || 'I apologize, but I couldn\'t generate a response.'}
+                        </div>
+                    `;
+                } else {
+                    chatMessages.innerHTML += `
+                        <div class="chat-message assistant error">
+                            Error: ${data.error || 'Failed to get response'}
+                        </div>
+                    `;
+                }
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Remove loading message
+                const loadingMessage = document.getElementById('loading-message');
+                if (loadingMessage) {
+                    loadingMessage.remove();
+                }
+                
+                chatMessages.innerHTML += `
+                    <div class="chat-message assistant error">
+                        Error: Failed to get response
+                    </div>
+                `;
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+
+        // Handle Enter key in chat input
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendChatMessage();
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

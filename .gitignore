@@ -212,3 +212,7 @@ __marimo__/
 .cursor
 *test*.json
 spotify-auth
+.DS_Store
+*.safetensors
+*.pth
+*.pt

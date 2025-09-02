@@ -10,6 +10,9 @@ from ViewerManager import ViewerManager
 from DataManager import DataManager, Index
 import argparse
 import secrets
+import sys
+from textmodel.MusicGemma import get_model_and_such
+from textmodel.query_with_music import query_with_music, query
 
 
 class ManagerManager:
@@ -100,6 +103,8 @@ class ManagerManager:
         self.app = Flask(__name__)
         self.app.secret_key = secrets.token_hex(16)
         
+        self.model, self.processor, self.tokenizer = get_model_and_such()
+        
         # Add routes
         self.app.route('/')(self.index)
         self.app.route('/api/status')(self.status_api)
@@ -107,9 +112,14 @@ class ManagerManager:
         self.app.route('/api/metadata')(self.metadata_api)
         self.app.route('/api/color-data')(self.color_data_api)
         self.app.route('/api/cluster-centroids')(self.cluster_centroids_api)
+        self.app.route('/api/cluster-names')(self.cluster_names_api)
+        self.app.route('/api/similarity-search')(self.similarity_search_api)
+        self.app.route('/api/set-color-source')(self.set_color_source_api)
         self.app.route('/api/cluster-background')(self.cluster_background_api)
         self.app.route('/api/data-bounds')(self.data_bounds_api)
         self.app.route('/api/spotify-search')(self.spotify_search_api)
+        self.app.route('/api/initiate-conversation', methods=['POST'])(self.initiate_conversation_api)
+        self.app.route('/api/chat', methods=['POST'])(self.chat_api)
         self.app.route('/login')(self.spotify_login)
         self.app.route('/callback')(self.spotify_callback)
         self.app.route('/logout')(self.spotify_logout)
@@ -715,6 +725,161 @@ class ManagerManager:
         except Exception as exc:
             return jsonify({'error': str(exc)}), 500
 
+    def cluster_names_api(self):
+        """Get cluster names for display on the scatter plot."""
+        try:
+            cluster_names_file = "./cluster_names.json"
+            if not os.path.exists(cluster_names_file):
+                return jsonify({'cluster_names': None})
+            
+            with open(cluster_names_file, 'r') as f:
+                cluster_names = json.load(f)
+            
+            return jsonify({
+                'cluster_names': cluster_names
+            })
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 500
+
+    def similarity_search_api(self):
+        """Perform similarity search using MusicGemma text embeddings and create an index."""
+        try:
+            # Get query from request
+            query = request.args.get('query', '').strip()
+            if not query:
+                return jsonify({'error': 'Query parameter is required'}), 400
+            
+            # Import MusicGemma model
+            sys.path.append('./text-model')
+            
+            # Load model and get text embedding
+            if self.model is None:
+                self.model, self.processor, self.tokenizer = get_model_and_such()
+            
+            # Get text embedding from the music model
+            if hasattr(self.model.model.model, 'music_model') and self.model.model.model.music_model:
+                # Get text embedding - try different method names
+                music_model = self.model.model.model.music_model
+                text_embedding = None
+                
+                if hasattr(music_model, 'get_text_embedding'):
+                    text_embedding = music_model.get_text_embedding([query])
+                elif hasattr(music_model, 'get_text_embedding_from_data'):
+                    text_embedding = music_model.get_text_embedding_from_data([query])
+                elif hasattr(music_model, 'encode_text'):
+                    text_embedding = music_model.encode_text([query])
+                else:
+                    return jsonify({'error': 'Text embedding method not found in music model'}), 500
+                
+                if text_embedding is None:
+                    return jsonify({'error': 'Failed to get text embedding'}), 500
+                
+                # Load original embeddings
+                embeddings_file = "./music-clips-embeddings.npy"
+                if not os.path.exists(embeddings_file):
+                    return jsonify({'error': 'Embeddings file not found'}), 404
+                
+                embeddings = np.load(embeddings_file)
+                
+                # Calculate cosine similarities
+                similarities = embeddings @ text_embedding.T
+                
+                index_name = f"similarity_{query.replace(' ', '_').lower()}"
+                display_name = f"Similarity: {query}"
+                
+                # Create the index
+                similarity_index = Index(similarities.flatten(), {
+                    "name": index_name,
+                    "display_name": display_name,
+                    "query": query,
+                    "type": "similarity_search"
+                })
+                
+                # Add to data manager indexes
+                self.data_manager.indexes.add_index(similarity_index)
+                
+                # Set as active color source
+                self.viewer_manager.set_color_source(f"index:{index_name}", index_name, "primary")
+                
+                # Convert numpy array to list for JSON serialization
+                similarities_list = similarities.flatten().tolist()
+                
+                return jsonify({
+                    'similarities': similarities_list,
+                    'query': query,
+                    'index_name': index_name,
+                    'display_name': display_name,
+                    'status': 'success'
+                })
+            else:
+                return jsonify({'error': 'Music model not available'}), 500
+                
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 500
+
+    def set_color_source_api(self):
+        """Set the active color source."""
+        try:
+            # Handle invalid JSON
+            if not request.is_json:
+                return jsonify({'error': 'Content-Type must be application/json'}), 400
+            
+            data = request.get_json()
+            if data is None:
+                return jsonify({'error': 'Invalid JSON data'}), 400
+            
+            color_source = data.get('color_source')
+            source_name = data.get('source_name')
+            source_data_manager = data.get('source_data_manager')
+            
+            if not color_source:
+                return jsonify({'error': 'Color source is required'}), 400
+            
+            # Set the color source
+            self.viewer_manager.set_color_source(color_source, source_name, source_data_manager)
+            
+            return jsonify({
+                'status': 'success',
+                'message': f'Color source set to {color_source}',
+                'current_color_source': color_source
+            })
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 500
+    
+    def initiate_conversation( self, music_data: np.ndarray ):
+        """Initiate a conversation with the music model."""
+        try:
+            if self.model is None:
+                self.model, self.processor, self.tokenizer = get_model_and_such()
+            output = query_with_music(self.model, self.processor, "Describe this music.", music_data, max_new_tokens=16) # Do not change this you dum dum.
+            model_response = output.split("model")[-1].strip()
+            out_text = f"This music has {model_response}."
+            return jsonify({
+                'status': 'success',
+                'message': f'Conversation initiated with {model_response}',
+                'model_response': model_response,
+                "conversation_history": [ { "role": "system", "content": [ { "type": "text", "text": out_text } ] } ]
+            })
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 500
+        
+    def chat( self, conversation_history: list[dict]=[], max_new_tokens: int=128 ):
+        """Chat with the music model."""
+        try:
+            if self.model is None:
+                self.model, self.processor, self.tokenizer = get_model_and_such()
+            
+            output = query(self.model, self.processor, conversation_history=conversation_history, max_new_tokens=max_new_tokens) # Do not change this you dum dum.
+            model_response = output.split("model")[-1].strip()
+            return jsonify({
+                'status': 'success',
+                'message': f'Conversation continued with {model_response}',
+                'model_response': model_response,
+                "conversation_history": conversation_history + [ { "role": "system", "content": [ { "type": "text", "text": model_response } ] } ]
+            })
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 500
+
     def cluster_background_api(self):
         """Serve the cluster background SVG."""
         try:
@@ -798,6 +963,42 @@ class ManagerManager:
                 'suggestions': suggestions,
                 'current_data_manager': 'primary'
             })
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 500
+
+    def initiate_conversation_api(self):
+        """API endpoint to initiate a conversation with music data."""
+        try:
+            data = request.get_json()
+            if not data or 'point_index' not in data:
+                return jsonify({'error': 'Missing point_index parameter'}), 400
+            
+            point_index = data['point_index']
+            
+            # Get the music data for this point from the primary data manager
+            primary_data = self.data_manager.get_data()
+            if primary_data is not None and point_index < len(primary_data):
+                music_data = primary_data[point_index]
+                return self.initiate_conversation(music_data)
+            else:
+                return jsonify({'error': 'Invalid point index or no data available'}), 400
+                
+        except Exception as exc:
+            return jsonify({'error': str(exc)}), 500
+
+    def chat_api(self):
+        """API endpoint to continue a chat conversation."""
+        try:
+            data = request.get_json()
+            if not data or 'conversation_history' not in data:
+                return jsonify({'error': 'Missing conversation_history parameter'}), 400
+            
+            conversation_history = data['conversation_history']
+            print( conversation_history )
+            max_new_tokens = 128 #data.get('max_new_tokens', 128)
+            
+            return self.chat(conversation_history, max_new_tokens)
+                
         except Exception as exc:
             return jsonify({'error': str(exc)}), 500
 
