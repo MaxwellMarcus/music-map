@@ -5,6 +5,7 @@ from transformers import AutoTokenizer, AutoProcessor, Gemma3ForConditionalGener
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training, PeftModel
 import laion_clap
 import numpy as np
+import huggingface_hub
 
 # --- 1. Define the Embedding Projector ---
 class EmbeddingProjector(nn.Module):
@@ -52,6 +53,13 @@ class MusicGemma( Gemma3Model ):
 
   def load_music_model( self ):
       self.music_model = laion_clap.CLAP_Module( enable_fusion=False, amodel="HTSAT-base")
+      if not os.path.exists( "./textmodel/music_audioset_epoch_15_esc_90.14.pt" ):
+        print( "Downloading music model weights..." )
+        huggingface_hub.hf_hub_download(
+            repo_id="lukewys/laion_clap", 
+            filename="music_audioset_epoch_15_esc_90.14.pt",
+            local_dir="./textmodel"
+        )
       self.music_model.load_ckpt( "./textmodel/music_audioset_epoch_15_esc_90.14.pt" )
       self.music_model.to( self.device )
       self.music_model.to( self.dtype )
