@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, Response, redirect, session, make_response
+from flask import Flask, render_template, request, jsonify, Response, redirect, session, make_response, send_file
 import os
 import numpy as np
 import pandas as pd
@@ -107,6 +107,7 @@ class ManagerManager:
         
         # Add routes
         self.app.route('/')(self.index)
+        self.app.route('/favicon.ico')(self.favicon)
         self.app.route('/api/status')(self.status_api)
         self.app.route('/api/data.bin')(self.data_api)
         self.app.route('/api/metadata')(self.metadata_api)
@@ -131,6 +132,17 @@ class ManagerManager:
     
     def index(self):
         return render_template('index.html')
+    
+    def favicon(self):
+        """Serve the favicon.ico file."""
+        try:
+            favicon_path = "./favicon.ico"
+            if os.path.exists(favicon_path):
+                return send_file(favicon_path, mimetype='image/x-icon')
+            else:
+                return Response('', status=404)
+        except Exception as e:
+            return Response('', status=500)
     
     def spotify_login(self):
         """Initiate Spotify OAuth login"""
