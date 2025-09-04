@@ -34,11 +34,30 @@ A sophisticated web application built with Python Flask that provides an interac
 
 **🎵 Try the Interactive Music Visualization!**
 
-Click the image below to explore the interactive Plotly visualization:
+### **📸 Demo Preview:**
+![Music Visualization Demo](https://img.shields.io/badge/🎵-Interactive%20Demo%20Available-blue?style=for-the-badge&logo=plotly)
 
-[![Interactive Music Visualization](https://img.shields.io/badge/🎵-Interactive%20Demo-blue?style=for-the-badge&logo=plotly)](demo_plot.html)
+### **🚀 Live Demo Options:**
 
-**[Open Interactive Demo](demo_plot.html)** - Explore the music visualization with zoom, pan, and point selection!
+#### **Option 1: Local Demo (Recommended)**
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd web-viewer
+
+# Open the demo in your browser
+open demo_plot.html
+# or
+start demo_plot.html  # Windows
+```
+
+#### **Option 2: GitHub Pages (Coming Soon)**
+- The demo will be available at: `https://yourusername.github.io/web-viewer/demo_plot.html`
+- Automatically updates when you push changes
+
+#### **Option 3: Direct File Download**
+- Download `demo_plot.html` from the repository
+- Open it in any modern web browser
 
 ### **🎯 What the Demo Shows:**
 - **Interactive Plot**: Sample music artist data with t-SNE and UMAP projections
@@ -47,14 +66,28 @@ Click the image below to explore the interactive Plotly visualization:
 - **View Switching**: Toggle between different dimensionality reduction methods
 - **Responsive Controls**: Zoom, pan, and reset functionality
 
-### **🚀 How to Use:**
-1. **Open the Demo**: Click the link above or open `demo_plot.html` in your browser
-2. **Explore**: Use mouse wheel to zoom, click and drag to pan
-3. **Switch Views**: Try both t-SNE and UMAP projections
-4. **Interact**: Click on artist points to see what happens
-5. **Customize**: Toggle cluster colors and reset the view
+### **💡 Pro Tip:**
+For the best experience, clone the repository and open `demo_plot.html` locally. This gives you full access to all interactive features!
 
-*Note: The interactive demo requires opening the HTML file in a web browser. For the full experience with real data and AI chatbot, run the application locally.*
+## 🌐 **GitHub Pages Live Demo**
+
+### **Enable GitHub Pages:**
+1. **Go to Repository Settings** → **Pages**
+2. **Source**: Select "GitHub Actions"
+3. **Branch**: Choose `main` or `master`
+4. **Save**: The workflow will automatically deploy your demo
+
+### **Live Demo URL:**
+Once enabled, your demo will be available at:
+```
+https://yourusername.github.io/web-viewer/
+```
+
+### **What Gets Deployed:**
+- ✅ Interactive demo visualization
+- ✅ Sample music artist data
+- ✅ Responsive design for all devices
+- ✅ Automatic updates on every push
 
 ## 🚀 Quick Start
 
@@ -91,6 +124,9 @@ web-viewer/
 ├── requirements.txt                # Python dependencies
 ├── README.md                      # This file
 ├── demo_plot.html                 # Interactive demo visualization
+├── index_gh_pages.html            # GitHub Pages landing page
+├── .github/workflows/             # GitHub Actions workflows
+│   └── pages.yml                  # GitHub Pages deployment
 ├── DataManager.py                 # Data management and processing
 ├── ViewerManager.py               # Visualization and interaction logic
 ├── templates/
