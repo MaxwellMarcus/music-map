@@ -7,7 +7,7 @@
   <h1>🎵 Music Visualization & AI Chatbot</h1>
   <p><strong>Interactive 2D music artist visualization with AI-powered conversational analysis</strong></p>
   
-  <img src="exampleimage.png" alt="Music Visualization Screenshot" width="800" style="border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin: 20px 0;">
+  <img src="ExampleImage.png" alt="Music Visualization Screenshot" width="800" style="border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin: 20px 0;">
   
   <p><em>Explore musical artists in an interactive 2D space with AI chatbot conversations about their music</em></p>
   
