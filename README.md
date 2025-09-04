@@ -1,4 +1,25 @@
-# Music Visualization Web Application with AI Chatbot
+**Built with ❤️ for music exploration and AI research**
+
+# 🎵 **Music Visualization & AI Chatbot**
+
+<div align="center">
+  <img src="icon.png" alt="Music App Icon" width="80" height="80" style="border-radius: 16px;">
+  <h1>🎵 Music Visualization & AI Chatbot</h1>
+  <p><strong>Interactive 2D music artist visualization with AI-powered conversational analysis</strong></p>
+  
+  <img src="exampleimage.png" alt="Music Visualization Screenshot" width="800" style="border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin: 20px 0;">
+  
+  <p><em>Explore musical artists in an interactive 2D space with AI chatbot conversations about their music</em></p>
+  
+  [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+  [![Flask](https://img.shields.io/badge/Flask-2.3.3-green.svg)](https://flask.palletsprojects.com/)
+  [![Plotly](https://img.shields.io/badge/Plotly-Interactive-orange.svg)](https://plotly.com/)
+  [![AI Chat](https://img.shields.io/badge/AI%20Chat-Music%20Aware-purple.svg)](https://github.com)
+</div>
+
+---
+
+## 🎯 **Overview**
 
 A sophisticated web application built with Python Flask that provides an interactive visualization of musical artists and their relationships, featuring an AI-powered chatbot for music discussions and analysis.
 
@@ -30,64 +51,6 @@ A sophisticated web application built with Python Flask that provides an interac
 - **OAuth Authentication**: Secure Spotify account connection
 - **Track Search**: Automatic music discovery for artists
 
-## 📊 **Interactive Demo**
-
-**🎵 Try the Interactive Music Visualization!**
-
-### **📸 Demo Preview:**
-![Music Visualization Demo](https://img.shields.io/badge/🎵-Interactive%20Demo%20Available-blue?style=for-the-badge&logo=plotly)
-
-### **🚀 Live Demo Options:**
-
-#### **Option 1: Local Demo (Recommended)**
-```bash
-# Clone the repository
-git clone <your-repo-url>
-cd web-viewer
-
-# Open the demo in your browser
-open demo_plot.html
-# or
-start demo_plot.html  # Windows
-```
-
-#### **Option 2: GitHub Pages (Coming Soon)**
-- The demo will be available at: `https://yourusername.github.io/web-viewer/demo_plot.html`
-- Automatically updates when you push changes
-
-#### **Option 3: Direct File Download**
-- Download `demo_plot.html` from the repository
-- Open it in any modern web browser
-
-### **🎯 What the Demo Shows:**
-- **Interactive Plot**: Sample music artist data with t-SNE and UMAP projections
-- **Cluster Visualization**: Color-coded artist clusters with dynamic toggling
-- **Point Interaction**: Click on artists to see simulated AI chatbot responses
-- **View Switching**: Toggle between different dimensionality reduction methods
-- **Responsive Controls**: Zoom, pan, and reset functionality
-
-### **💡 Pro Tip:**
-For the best experience, clone the repository and open `demo_plot.html` locally. This gives you full access to all interactive features!
-
-## 🌐 **GitHub Pages Live Demo**
-
-### **Enable GitHub Pages:**
-1. **Go to Repository Settings** → **Pages**
-2. **Source**: Select "GitHub Actions"
-3. **Branch**: Choose `main` or `master`
-4. **Save**: The workflow will automatically deploy your demo
-
-### **Live Demo URL:**
-Once enabled, your demo will be available at:
-```
-https://yourusername.github.io/web-viewer/
-```
-
-### **What Gets Deployed:**
-- ✅ Interactive demo visualization
-- ✅ Sample music artist data
-- ✅ Responsive design for all devices
-- ✅ Automatic updates on every push
 
 ## 🚀 Quick Start
 
@@ -123,10 +86,6 @@ web-viewer/
 ├── app.py                          # Main Flask application with API endpoints
 ├── requirements.txt                # Python dependencies
 ├── README.md                      # This file
-├── demo_plot.html                 # Interactive demo visualization
-├── index_gh_pages.html            # GitHub Pages landing page
-├── .github/workflows/             # GitHub Actions workflows
-│   └── pages.yml                  # GitHub Pages deployment
 ├── DataManager.py                 # Data management and processing
 ├── ViewerManager.py               # Visualization and interaction logic
 ├── templates/
@@ -267,4 +226,3 @@ For questions, issues, or contributions, please:
 
 ---
 
-**Built with ❤️ for music exploration and AI research**

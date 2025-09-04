@@ -690,6 +690,17 @@
             border-color: #007bff;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Cluster name annotation styling */
+        .cluster-annotation {
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -797,6 +808,15 @@
         let isVibeSearchMode = false;
         let currentSimilarities = null;
         let originalColorData = null;
+
+        // Function to truncate cluster names to first two words
+        function truncateClusterName(fullName) {
+            if (!fullName || typeof fullName !== 'string') {
+                return fullName;
+            }
+            const words = fullName.trim().split(/\s+/);
+            return words.slice(0, 2).join(' ');
+        }
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', async function() {
@@ -1694,17 +1714,20 @@
                 annotations.push({
                     x: centroid[0],
                     y: centroid[1],
-                    text: clusterName,
+                    text: truncateClusterName(clusterName), // Display truncated name
+                    fulltext: clusterName, // Keep full name for reference
                     showarrow: false,
                     font: {
                         size: 14,
-                        color: '#ffffff'
+                        color: '#ffffff',
+                        family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                     },
-                    bgcolor: 'rgba(0, 0, 0, 0.7)',
+                    bgcolor: 'rgba(0, 0, 0, 0.8)',
                     bordercolor: '#ffffff',
-                    borderwidth: 1,
+                    borderwidth: 2,
                     xanchor: 'center',
-                    yanchor: 'middle'
+                    yanchor: 'middle',
+                    textangle: 0
                 });
             }
             

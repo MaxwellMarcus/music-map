@@ -6,6 +6,7 @@ from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training, Pe
 import laion_clap
 import numpy as np
 import huggingface_hub
+import os
 
 # --- 1. Define the Embedding Projector ---
 class EmbeddingProjector(nn.Module):

@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 import torch
+import os
 
 def query_with_music( model, processor, query: str, music_data: np.ndarray, conversation_history: list[dict]=[], max_new_tokens: int=16 ) -> list[dict]:
     set_lora_scaling( model, 8 )
