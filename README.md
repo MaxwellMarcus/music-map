@@ -30,6 +30,32 @@ A sophisticated web application built with Python Flask that provides an interac
 - **OAuth Authentication**: Secure Spotify account connection
 - **Track Search**: Automatic music discovery for artists
 
+## 📊 **Interactive Demo**
+
+**🎵 Try the Interactive Music Visualization!**
+
+Click the image below to explore the interactive Plotly visualization:
+
+[![Interactive Music Visualization](https://img.shields.io/badge/🎵-Interactive%20Demo-blue?style=for-the-badge&logo=plotly)](demo_plot.html)
+
+**[Open Interactive Demo](demo_plot.html)** - Explore the music visualization with zoom, pan, and point selection!
+
+### **🎯 What the Demo Shows:**
+- **Interactive Plot**: Sample music artist data with t-SNE and UMAP projections
+- **Cluster Visualization**: Color-coded artist clusters with dynamic toggling
+- **Point Interaction**: Click on artists to see simulated AI chatbot responses
+- **View Switching**: Toggle between different dimensionality reduction methods
+- **Responsive Controls**: Zoom, pan, and reset functionality
+
+### **🚀 How to Use:**
+1. **Open the Demo**: Click the link above or open `demo_plot.html` in your browser
+2. **Explore**: Use mouse wheel to zoom, click and drag to pan
+3. **Switch Views**: Try both t-SNE and UMAP projections
+4. **Interact**: Click on artist points to see what happens
+5. **Customize**: Toggle cluster colors and reset the view
+
+*Note: The interactive demo requires opening the HTML file in a web browser. For the full experience with real data and AI chatbot, run the application locally.*
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -64,6 +90,7 @@ web-viewer/
 ├── app.py                          # Main Flask application with API endpoints
 ├── requirements.txt                # Python dependencies
 ├── README.md                      # This file
+├── demo_plot.html                 # Interactive demo visualization
 ├── DataManager.py                 # Data management and processing
 ├── ViewerManager.py               # Visualization and interaction logic
 ├── templates/
